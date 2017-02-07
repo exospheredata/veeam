@@ -1,0 +1,33 @@
+---
+driver:
+  name: vagrant
+  gui: false
+
+provisioner:
+  name: chef_zero
+  data_bags_path: "../../data_bags/"
+  # You may wish to disable always updating cookbooks in CI or other testing environments.
+  # For example:
+  #   always_update_cookbooks: <%= !ENV['CI'] %>
+  always_update_cookbooks: true
+  retry_on_exit_code: # https://discourse.chef.io/t/test-kitchen-1-10-0-released/8721
+    - 35 # 35 is the exit code signaling that the node is rebooting
+  max_retries: 2
+  client_rb:
+    exit_status: :enabled # Opt-in to the standardized exit codes
+    client_fork: false  # Forked instances don't return the real exit code
+
+verifier:
+  name: inspec
+
+platforms:
+  - name: windows-2012r2
+
+suites:
+  - name: default
+    run_list:
+      - recipe[veeam::default]
+    verifier:
+      inspec_tests:
+        - test/recipes
+    attributes:
