@@ -37,7 +37,9 @@ action :install do
   # TODO:  We should add a registry check here to see if the application has already been installed. This will help prevent
   # multiple unnecessary downloads.
   installed_version_reg_key = 'HKEY_LOCAL_MACHINE\SOFTWARE\Veeam\Veeam Backup Catalog'
-  return new_resource.updated_by_last_action(true) if registry_key_exists?(installed_version_reg_key, :machine)
+  return new_resource.updated_by_last_action(false) if registry_key_exists?(installed_version_reg_key, :machine)
+
+  raise ArgumentError, 'The VBRC service password must be set if a username is supplied' if new_resource.vbrc_service_user && new_resource.vbrc_service_password.nil?
 
   # Start by determining if this is a download or we need to mount the media via CIFS
   if new_resource.package_url
@@ -49,24 +51,11 @@ action :install do
     package_save_dir = win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'package'))
     package_name = new_resource.package_url.split('/').last
     downloaded_file_name = win_friendly_path(::File.join(package_save_dir, package_name))
-    # veeam_installer = win_friendly_path(::File.join(downloaded_file_name.gsub('.iso', ''), 'SETUP.EXE'))
-    installer_location = downloaded_file_name.gsub('.iso', '')
 
     # This will only create the directory if it does not exist which is likely the case if we have
     # never performed a remote_file install.
     directory package_save_dir do
       action :create
-    end
-
-    # We will want to remove the tmp downloaded file later to save space
-    file downloaded_file_name do
-      action :nothing
-    end
-
-    # We will want to remove the tmp directory later to save space
-    directory installer_location do
-      action :nothing
-      recursive true
     end
 
     # Download the Installer media
@@ -89,31 +78,91 @@ action :install do
     ruby_block 'Install the Backup Catalog application' do
       block do
         Chef::Log.debug 'Installing Veeam Backup and Recovery catalog'
-        cmd_str = <<-EOH
-          $DriveLetter = (Get-DiskImage -ImagePath '#{downloaded_file_name}' | Get-Volume).DriveLetter;
-          if ( [string]::IsNullOrEmpty($DriveLetter) ){ throw 'The ISO did not mount and we have no idea where why.' }
-          $veeam_backup_catalog_installer = ( "{0}:\\Catalog\\VeeamBackupCatalog64.msi" -f $DriveLetter)
-          $output = (Start-Process -FilePath "msiexec.exe" -ArgumentList " /qn /i $veeam_backup_catalog_installer" -Wait -Passthru -ErrorAction Stop)
-          if ( $output.ExitCode -ne 0){
-            throw ("The install failed with ExitCode [{0}].  The package is {1}" -f $output.ExitCode, $veeam_backup_catalog_installer )
-          }
-        EOH
-        cmd = powershell_out(cmd_str)
-        # Check powershell output
-        raise cmd.stderr if cmd.stderr != ''
+        install_media_path = get_media_installer_location(downloaded_file_name)
+        perform_catalog_install(install_media_path)
       end
       action :run
     end
 
+    # Unmount the Veeam backup ISO.
+    powershell_script 'Dismount Veeam media' do
+      code <<-EOH
+        Dismount-DiskImage -ImagePath "#{downloaded_file_name}"
+      EOH
+      guard_interpreter :powershell_script
+      only_if "[boolean] (Get-DiskImage -ImagePath '#{downloaded_file_name}').DevicePath"
+    end
+
+    return new_resource.updated_by_last_action(true) if new_resource.keep_media
+
+    # Since the property 'keep_media' was set to false, we will need to remove it
+
+    # We will want to remove the tmp downloaded file later to save space
+    file downloaded_file_name do
+      backup false
+      action :delete
+    end
+
     new_resource.updated_by_last_action(true)
   else
-    # TODO: Probably should add an option to handle Files from a CIFS Share
+    # TODO: Probably should add an option to handle Files from a CIFS Share.  As of this writing, we will only
+    # support downloaded ISO files
     Chef::Log.debug('No package URL was shared')
     raise ArgumentError, 'You must provide a package URL'
   end
 end
 
+def validate_powershell_out(script)
+  # This seemed like the DRYest way to handle the output handling from PowerShell.
+  cmd = powershell_out(script)
+  # Check powershell output
+  raise cmd.inspect if cmd.stderr != ''
+  cmd.stdout.chop
+end
+
 def check_os_version
+  # Return True otherwise raise an exeption.  This is the cleanest way to handle minimum versions.  We might add
+  # a secondary check for highest version at some point.
   return if node['platform_version'].to_f >= '6.1'.to_f # '6.1.' is the numeric platform_version for Windows 2008R2
   raise ArgumentError, 'Veeam Backup and recovery management requires a Windows 2008R2 or higher host!'
+end
+
+def get_media_installer_location(downloaded_file_name)
+  # When downloading and mounting the ISO, we need to track back to the Drive Letter.  This method will handle
+  # the look-up and keep the logic out of the main installation code.
+  Chef::Log.debug 'Searching for the Veeam installation media Drive Letter...'
+  cmd_str = <<-EOH
+    $DriveLetter = (Get-DiskImage -ImagePath '#{downloaded_file_name}' | Get-Volume).DriveLetter;
+    if ( [string]::IsNullOrEmpty($DriveLetter) ){ throw 'The ISO did not mount and we have no idea where why.' }
+    return ( $DriveLetter +':\' )
+  EOH
+  output = validate_powershell_out(cmd_str)
+  raise ArgumentError, 'Unable to find the Veeam installation media' unless output
+  Chef::Log.debug "Found the Veeam installation media at Drive Letter [#{output}]"
+  output
+end
+
+def perform_catalog_install(install_media_path)
+  Chef::Log.debug 'Installing Veeam Backup Catalog service... begin'
+  # In this case, we have many possible combinations of extra arugments that would need to be passed to the installer.
+  # The process will create a usable string formatted to support those optional arguments. It seemed safer to attempt
+  # to do all of this work inside of Ruby rather than the back and forth with PowerShell scripts. Note that each of these
+  # resources are considered optional and will only be set if sent to use by the resource block.
+  xtra_arguments = ''
+  xtra_arguments.concat(" INSTALLDIR=\"#{new_resource.install_dir} \" ") unless new_resource.install_dir.nil?
+  xtra_arguments.concat(" VM_CATALOGPATH=\"#{new_resource.vm_catalogpath} \" ") unless new_resource.vm_catalogpath.nil?
+  xtra_arguments.concat(" VBRC_SERVICE_USER=\"#{new_resource.vbrc_service_user}\" ") unless new_resource.vbrc_service_user.nil?
+  xtra_arguments.concat(" VBRC_SERVICE_PASSWORD=\"#{new_resource.vbrc_service_password}\" ") unless new_resource.vbrc_service_password.nil?
+  xtra_arguments.concat(" VBRC_SERVICE_PORT=\"#{new_resource.vbrc_service_port}\" ") unless new_resource.vbrc_service_port.nil?
+
+  cmd_str = <<-EOH
+    $veeam_backup_catalog_installer = ( "#{install_media_path}\\Catalog\\VeeamBackupCatalog64.msi")
+    Write-Host (' /qn /i ' + $veeam_backup_catalog_installer + ' #{xtra_arguments}')
+    $output = (Start-Process -FilePath "msiexec.exe" -ArgumentList $(' /qn /i ' + $veeam_backup_catalog_installer + ' #{xtra_arguments}') -Wait -Passthru -ErrorAction Stop)
+    if ( $output.ExitCode -ne 0){
+      throw ("The install failed with ExitCode [{0}].  The package is {1}" -f $output.ExitCode, $veeam_backup_catalog_installer )
+    }
+  EOH
+  validate_powershell_out(cmd_str)
+  Chef::Log.debug 'Installing Veeam Backup Catalog service... success'
 end

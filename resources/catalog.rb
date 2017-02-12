@@ -31,3 +31,11 @@ attribute :share_path, kind_of: String
 
 attribute :package_url, kind_of: String
 attribute :package_checksum, kind_of: String
+
+attribute :install_dir, kind_of: String
+attribute :vm_catalogpath, kind_of: String
+attribute :vbrc_service_user, kind_of: String
+attribute :vbrc_service_password, kind_of: String
+attribute :vbrc_service_port, kind_of: Integer
+
+attribute :keep_media, kind_of: [TrueClass, FalseClass], default: false
