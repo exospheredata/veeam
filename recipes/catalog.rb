@@ -12,8 +12,14 @@ if node['platform_version'].to_f >= '6.1'.to_f # '6.1.' is the numeric platform_
   include_recipe('ms_dotnet::ms_dotnet4')
 
   veeam_catalog 'Install Veeam Backup Catalog' do
-    package_url 'http://192.168.33.10/software/veeam/VeeamBackup&Replication_9.0.0.902.iso'
-    package_checksum '21f9d2c318911e668511990b8bbd2800141a7764cc97a8b78d4c2200c1225c88'
+    package_url node['veeam']['installer']['package_url']
+    package_checksum node['veeam']['installer']['package_checksum']
+    install_dir node['veeam']['catalog']['install_dir']
+    vm_catalogpath node['veeam']['catalog']['vm_catalogpath']
+    vbrc_service_user node['veeam']['catalog']['vbrc_service_user']
+    vbrc_service_password node['veeam']['catalog']['vbrc_service_password']
+    vbrc_service_port node['veeam']['catalog']['vbrc_service_port']
+    keep_media node['veeam']['catalog']['keep_media']
     action :install
   end
 else
