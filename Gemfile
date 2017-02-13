@@ -6,7 +6,7 @@
 
 source 'https://rubygems.org'
 
-gem 'berkshelf', '5.2.0'
+gem 'berkshelf', '5.6.2'
 
 group :test do
   gem 'cookstyle'

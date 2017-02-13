@@ -9,6 +9,7 @@ version '0.1.0'
 supports 'windows'
 
 depends 'windows', '2.0.2'
+depends 'ms_dotnet', '3.1.0'
 
 # If you upload to Supermarket you should set this so your cookbook
 # gets a `View Issues` link
