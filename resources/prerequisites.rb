@@ -1,11 +1,11 @@
 # Cookbook Name:: veeam
-# Resource:: catalog
+# Resource:: prerequisites
 #
 # Author:: Jeremy Goodrum
 # Email:: chef@exospheredata.com
 #
 # Version:: 0.1.0
-# Date:: 2017-02-07
+# Date:: 2017-02-13
 #
 # Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
 #
@@ -31,10 +31,4 @@ attribute :share_path, kind_of: String
 attribute :package_url, kind_of: String
 attribute :package_checksum, kind_of: String
 
-attribute :install_dir, kind_of: String
-attribute :vm_catalogpath, kind_of: String
-attribute :vbrc_service_user, kind_of: String
-attribute :vbrc_service_password, kind_of: String
-attribute :vbrc_service_port, kind_of: Integer
-
-attribute :keep_media, kind_of: [TrueClass, FalseClass], default: false
+attribute :install_sql, kind_of: [TrueClass, FalseClass], default: false
