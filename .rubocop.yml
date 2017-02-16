@@ -1,9 +1,13 @@
 Metrics/LineLength:
   Max: 120
 Style/TrailingCommaInLiteral:
-  # ChefAutomate will throw an error due to chages in protocol after 
-  # Rubocop 0.39.0.  
+  # ChefAutomate will throw an error due to chages in protocol after
+  # Rubocop 0.39.0.
   EnforcedStyleForMultiline: no_comma
 EndOfLine:
   # This is an unnecessary test and will cause issues with testing on Windows.
   Enabled: false
+Bundler/OrderedGems:
+  # For some reason my local testing didn't catch this one.  Basically, Gems need
+  # to be in alphabetical order http://rubocop.readthedocs.io/en/latest/cops_bundler
+  Enabled: true
