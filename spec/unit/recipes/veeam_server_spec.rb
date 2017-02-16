@@ -1,12 +1,12 @@
 #
 # Cookbook Name:: veeam
-# Spec:: catalog
+# Spec:: server
 #
 # Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
 
 require 'spec_helper'
 
-describe 'veeam::catalog' do
+describe 'veeam::server' do
   before do
     mock_windows_system_framework # Windows Framework Helper from 'spec/windows_helper.rb'
     stub_command('sc.exe query W3SVC').and_return 1
@@ -28,7 +28,7 @@ describe 'veeam::catalog' do
           end
 
           let(:runner) do
-            ChefSpec::SoloRunner.new(platform: platform, version: version, file_cache_path: '/tmp/cache', step_into: ['veeam_catalog'])
+            ChefSpec::SoloRunner.new(platform: platform, version: version, file_cache_path: '/tmp/cache', step_into: ['veeam_server'])
           end
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
@@ -36,15 +36,14 @@ describe 'veeam::catalog' do
           let(:downloaded_file_name) { win_friendly_path(::File.join(package_save_dir, 'VeeamBackup&Replication_9.0.0.902.iso')) }
 
           it 'converges successfully' do
-            expect(chef_run).to install_veeam_prerequisites('Install Veeam Prerequisites')
-            expect(chef_run).to install_veeam_catalog('Install Veeam Backup Catalog')
+            expect(chef_run).to install_veeam_server('Install Veeam Backup Server')
             expect { chef_run }.not_to raise_error
           end
-          it 'Step into LWRP - veeam_catalog' do
+          it 'Step into LWRP - veeam_server' do
             expect(chef_run).to create_directory(package_save_dir)
             expect(chef_run).to create_remote_file(downloaded_file_name)
             expect(chef_run).to run_powershell_script('Load Veeam media')
-            expect(chef_run).to run_ruby_block('Install the Backup Catalog application')
+            expect(chef_run).to run_ruby_block('Install the Backup server application')
             expect(chef_run).to delete_file(downloaded_file_name)
           end
           it 'should unmount the media' do
@@ -52,20 +51,20 @@ describe 'veeam::catalog' do
             expect(chef_run).to run_powershell_script('Dismount Veeam media')
           end
           it 'should not remove the media if keep_media is True' do
-            node.override['veeam']['catalog']['keep_media'] = true
+            node.override['veeam']['server']['keep_media'] = true
             expect(chef_run).not_to delete_file(downloaded_file_name)
           end
           it 'returns an Argument error when no password supplied' do
-            node.override['veeam']['catalog']['vbrc_service_user'] = 'user1'
-            expect { chef_run }.to raise_error(ArgumentError, /The VBRC service password must be set if a username is supplied/)
+            node.override['veeam']['server']['vbr_service_user'] = 'user1'
+            expect { chef_run }.to raise_error(ArgumentError, /The VBR service password must be set if a username is supplied/)
           end
           it 'returns NO error when username and password supplied' do
-            node.override['veeam']['catalog']['vbrc_service_user'] = 'user1'
-            node.override['veeam']['catalog']['vbrc_service_password'] = 'password1'
+            node.override['veeam']['server']['vbr_service_user'] = 'user1'
+            node.override['veeam']['server']['vbr_service_password'] = 'password1'
             expect { chef_run }.not_to raise_error
           end
           it 'returns NO error when install_dir supplied' do
-            node.override['veeam']['catalog']['install_dir'] = 'C:\\Veeam\\BackupCatalog'
+            node.override['veeam']['server']['install_dir'] = 'C:\\Veeam\\Backupserver'
             expect { chef_run }.not_to raise_error
           end
         end

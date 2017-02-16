@@ -12,6 +12,7 @@ provisioner:
   always_update_cookbooks: true
   retry_on_exit_code: # https://discourse.chef.io/t/test-kitchen-1-10-0-released/8721
     - 35 # 35 is the exit code signaling that the node is rebooting
+    - 259 # WinRM error during kitchen test when rebooting after installing .NET 4.5.2
   max_retries: 2
   client_rb:
     exit_status: :enabled # Opt-in to the standardized exit codes
@@ -31,3 +32,37 @@ suites:
       inspec_tests:
         - test/inspec/catalog
     attributes:
+  - name: server
+    run_list:
+      - recipe[veeam::server]
+    driver:
+      #  Veeam Backup Server requires a minimum of 2 CPU and 4GB of RAM
+      customize:
+        cpus: 2
+        memory: 4096
+    verifier:
+      inspec_tests:
+        - test/inspec/server
+    attributes:
+      veeam:
+        server:
+          accept_eula: true
+  - name: server_with_catalog
+    run_list:
+      - recipe[veeam::catalog]
+      - recipe[veeam::server]
+    driver:
+      #  Veeam Backup Server requires a minimum of 2 CPU and 4GB of RAM
+      customize:
+        cpus: 2
+        memory: 4096
+    verifier:
+      inspec_tests:
+        - test/inspec/catalog
+        - test/inspec/server
+    attributes:
+      veeam:
+        catalog:
+          keep_media: true
+        server:
+          accept_eula: true
