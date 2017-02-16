@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Veeam:](#veeam)
+    - [_a cookbook to deploy Veeam Backup and Recovery server_](#_a-cookbook-to-deploy-veeam-backup-and-recovery-server_)
   - [Requirements](#requirements)
     - [Platforms](#platforms)
     - [Chef](#chef)
@@ -10,9 +11,11 @@
   - [Attributes](#attributes)
     - [Installation Media](#installation-media)
     - [Catalog](#catalog)
+    - [Server](#server)
   - [Usage](#usage)
     - [default](#default)
     - [catalog recipe](#catalog-recipe)
+    - [server recipe](#server-recipe)
   - [Upload to Chef Server](#upload-to-chef-server)
   - [Matchers/Helpers](#matchershelpers)
     - [Matchers](#matchers)
@@ -49,7 +52,6 @@ Windows 2008R2 and lower is _not_ supported.
 ### Cookbooks
 
 - windows = 2.0.2
-- ms_dotnet = 3.1.0
 
 
 ## Attributes
@@ -65,6 +67,156 @@ Windows 2008R2 and lower is _not_ supported.
 - `node['veeam']['catalog']['vbrc_service_port']` - Integer.  Specifies a TCP port that will be used by the Veeam Guest Catalog Service. By default, port number 9393 is used.
 - `node['veeam']['catalog']['keep_media']` - TrueFalse.  Determines if the recipe should remove the media at the end of the installation.  Default is false
 
+### Server
+- `node['veeam']['server']['accept_eula']` - TrueFalse.  Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA.  Default = false
+- `node['veeam']['server']['install_dir']` - String. Installs the component to the specified location. By default, Veeam Backup & Replication uses the Backup Catalog subfolder in the `C:\Program Files\Veeam\Backup and Replication\` folder.
+- `node['veeam']['server']['vbr_license_file']` -
+- `node['veeam']['server']['vbr_check_updates']` - TrueFalse. Specifies if you want Veeam Backup & Replication to automatically check for new product patches and versions.
+- `node['veeam']['server']['vbr_service_user']` - String. Specifies the account under which the Veeam Backup Service will run. The account must have full control NTFS permissions on the `VBRCatalog` folder where index files are stored and the Database owner rights for the configuration database on the Microsoft SQL Server where the configuration database is deployed.  If you do not specify this parameter, the Veeam Guest Catalog Service will run under the Local System account.  NOTE: The account must be in Domain\User or Computer\User format.  If using a local account, then use either the `hostname\username` or use `.\username`
+- `node['veeam']['server']['vbr_service_password']` - String. Specifies a password for the account under which the Veeam Guest Backup Service will run.  This parameter must be used if you have specified the `VBR_SERVICE_USER` parameter.
+- `node['veeam']['server']['vbr_service_port']` - Integer.  Specifies a TCP port that will be used by the Veeam Guest Backup Service. By default, port number 9392 is used.
+- `node['veeam']['server']['vbr_secure_connections_port']` - Integer.  Specifies an SSL port used for communication between the mount server and the backup server. By default, port 9401 is used.
+- `node['veeam']['server']['vbr_sqlserver_server']` - String. Specifies a Microsoft SQL server and instance on which the configuration database will be deployed. By default, Veeam Backup & Replication uses the (local)\VEEAMSQL2012 server.  If not included or set, the recipe will install SQLExpress 2012 on the node.
+- `node['veeam']['server']['vbr_sqlserver_database']` - String. Specifies a name of the configuration database to be deployed, by default, `VeeamBackup`.
+- `node['veeam']['server']['vbr_sqlserver_auth']` - String. Specifies if you want to use the SQL Server authentication mode to connect to the Microsoft SQL Server where the Veeam Backup & Replication is deployed.  Supported Values are Windows or Mixed
+- `node['veeam']['server']['vbr_sqlserver_username']` - String. This parameter must be used if you have specified the `VBR_SQLSERVER_AUTHENTICATION` parameter.  Specifies a LoginID to connect to the Microsoft SQL Server in the SQL Server authentication mode.
+- `node['veeam']['server']['vbr_sqlserver_password']` - String. This parameter must be used if you have specified the `VBR_SQLSERVER_AUTHENTICATION` parameter.  Specifies a password to connect to the Microsoft SQL Server in the SQL Server authentication mode.
+
+- `node['veeam']['server']['pf_ad_nfsdatastore']` - String. Specifies the vPower NFS root folder to which Instant VM Recovery cache will be stored. By default, the `C:\ProgramData\Veeam\Backup\NfsDatastore\` folder is used.
+- `node['veeam']['server']['keep_media']` - TrueFalse.  Determines if the recipe should remove the media at the end of the installation.  Default is false
+
+- `node['sql_server']['server_sa_password']` - String.  Configures the SQL Admin password for the SQLExpress instance.  Default value is 'Veeam1234'
+
+## Resource/Provider
+
+### Veeam_Prerequisites
+Installs the required resoures to support Veeam applications.  Included in this resource:
+- .NET Framework 4.5.2
+- Microsoft SQL Server System CLR Types (x64)
+- Microsoft SQL Server 2012 Management Objects (x64)
+- Microsoft SQL Server 2014 (64-bit) [optional]
+
+#### Actions:
+* `:install` - Installs all of the prerequisites and optionally installs SQL Express
+
+#### Properties:
+_NOTE: properties in bold are required_
+* **`package_url`** - Full URL to the installation media
+* **`package_checksum`** - sha256 checksum of the installation media
+* `install_sql` - Determines if SQL Express should be installed as part of adding the prerequisites.
+* `package_name` - FUTURE property
+* `share_path` - FUTURE property
+
+#### Examples:
+```ruby
+# Install default Prerequisite tools but no SQL Express
+veeam_prerequisites 'Install Veeam Prerequisites' do
+  package_url 'http://myartifactory/Veeam/installationmedia.iso'
+  package_checksum 'sha256checksum'
+  action :install
+end
+```
+
+```ruby
+# Install default Prerequisite tools including SQL Express
+veeam_prerequisites 'Install Veeam Prerequisites' do
+  package_url 'http://myartifactory/Veeam/installationmedia.iso'
+  package_checksum 'sha256checksum'
+  install_sql true
+  action :install
+end
+```
+
+### Veeam_Catalog
+Installs the Veeam Catalog Service
+
+#### Actions:
+* `:install` - Installs the Veeam Backup Catalog service
+
+#### Properties:
+_NOTE: properties in bold are required_
+* **`package_url`** - Full URL to the installation media
+* **`package_checksum`** - sha256 checksum of the installation media
+* `install_dir` - Sets the install directory for the Veeam Backup Catalog service
+* `vm_catalogpath` - Specifies a path to the catalog folder where index files must be stored
+* `vbrc_service_user` - Specifies a user account under which the Veeam Guest Catalog Service will run
+* `vbrc_service_password` - Specifies a password for the account under which the Veeam Guest Catalog Service will run
+* `vbrc_service_port` - Specifies a TCP port that will be used by the Veeam Guest Catalog Service. By default, port number 9393 is used
+* `keep_media` - When set to true, the downloaded ISO will not be deleted.  This is helpful if you are installing multiple services on a single node.
+* `package_name` - FUTURE property
+* `share_path` - FUTURE property
+
+#### Examples:
+```ruby
+# A quick install of the catalog accepting all of the defaults
+veeam_catalog 'Install Veeam Backup Catalog' do
+  package_url 'http://myartifactory/Veeam/installationmedia.iso'
+  package_checksum 'sha256checksum'
+  action :install
+end
+```
+
+```ruby
+# Install of the catalog with a custom the service user set to a domain service account
+veeam_catalog 'Install Veeam Backup Catalog' do
+  package_url 'http://myartifactory/Veeam/installationmedia.iso'
+  package_checksum 'sha256checksum'
+  vbrc_service_user 'mydomain\_srvcuser'
+  vbrc_service_password 'myPassword1'
+  action :install
+end
+```
+
+### Veeam_Server
+Installs the Veeam Backup and Recovery Service
+
+#### Actions:
+* `:install` - Installs the Veeam Backup and Recovery service
+
+#### Properties:
+_NOTE: properties in bold are required_
+* **`package_url`** - Full URL to the installation media
+* **`package_checksum`** - sha256 checksum of the installation media
+* **`accept_eula`** - Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA.  Default = false
+* `install_dir` - Sets the install directory for the Veeam Backup and Recovery service
+* `vbr_license_file` - Future Property
+* `vbr_check_updates` - Specifies if you want Veeam Backup & Replication to automatically check for new product patches and versions.
+* `vbr_service_user` - Specifies a user account under which the Veeam Guest Backup Service will run
+* `vbr_service_password` - Specifies a password for the account under which the Veeam Guest Backup Service will run
+* `vbr_service_port` - Specifies a TCP port that will be used by the Veeam Guest Backup Service. By default, port number 9392 is used
+* `vbr_secure_connections_port` - Specifies a SSL port that will be used by the Veeam Guest Backup Service. By default, port number 9401 is used
+* `vbr_sqlserver_server` - Specifies a Microsoft SQL server and instance on which the configuration database will be deployed. By default, Veeam Backup & Replication uses the (local)\VEEAMSQL2012 server.  If not included or set, the recipe will install SQLExpress 2012 on the node.
+* `vbr_sqlserver_database` - Specifies a name of the configuration database to be deployed, by default, `VeeamBackup`.
+* `vbr_sqlserver_auth` - Specifies if you want to use the SQL Server authentication mode to connect to the Microsoft SQL Server where the Veeam Backup & Replication is deployed.  Supported Values are Windows or Mixed
+* `vbr_sqlserver_username` - This parameter must be used if you have specified the `VBR_SQLSERVER_AUTHENTICATION` parameter.  Specifies a LoginID to connect to the Microsoft SQL Server in the SQL Server authentication mode.
+* `vbr_sqlserver_password` - This parameter must be used if you have specified the `VBR_SQLSERVER_AUTHENTICATION` parameter.  Specifies a password to connect to the Microsoft SQL Server in the SQL Server authentication mode.
+* `pf_ad_nfsdatastore` - Specifies the vPower NFS root folder to which Instant VM Recovery cache will be stored. By default, the `C:\ProgramData\Veeam\Backup\NfsDatastore\` folder is used.
+* `keep_media` - When set to true, the downloaded ISO will not be deleted.  This is helpful if you are installing multiple services on a single node.
+* `package_name` - FUTURE property
+* `share_path` - FUTURE property
+
+#### Examples:
+```ruby
+# A quick install of the backup service accepting the EULA and all of the defaults
+veeam_server 'Install Veeam Backup Server' do
+  package_url 'http://myartifactory/Veeam/installationmedia.iso'
+  package_checksum 'sha256checksum'
+  accept_eula true
+  action :install
+end
+```
+
+```ruby
+# Install of the Backup and Recovery service with a custom the service user set to a domain service account
+veeam_server 'Install Veeam Backup Catalog' do
+  package_url 'http://myartifactory/Veeam/installationmedia.iso'
+  package_checksum 'sha256checksum'
+  accept_eula true
+  vbr_service_user 'mydomain\_srvcuser'
+  vbr_service_password 'myPassword1'
+  action :install
+end
+```
 
 ## Usage
 ### default
@@ -74,6 +226,10 @@ This is an empty recipe and should _not_ be used
 ### catalog recipe
 
 Installs and configures Veeam Backup and Recovery Catalog service using the default configuration
+
+### server recipe
+
+Installs and configures Veeam Backup and Recovery Server service using the default configuration
 
 ## Upload to Chef Server
 This cookbook should be included in each organization of your CHEF environment.  When importing, leverage Berkshelf:
@@ -91,6 +247,8 @@ _Note: Matchers should always be created in `libraries/matchers.rb` and used for
 
 **Tests the LWRP (veeam_catalog) with an action**
 * `install_veeam_catalog(resource_name)`
+* `install_veeam_server(resource_name)`
+* `install_veeam_prerequisites(resource_name)`
 
 
 ### Windows_Helper
@@ -143,6 +301,8 @@ This repo includes a **Rakefile** for common tasks
 | **rake unit** | Run ChefSpec examples |
 | **rake integration** | Run all kitchen suites |
 | **rake integration:kitchen:catalog-windows-2012r2** | Run catalog-windows-2012r2 test instance |
+| **rake integration:kitchen:server-windows-2012r2** | Run server-windows-2012r2 test instance |
+| **rake integration:kitchen:server-with-catalog-windows-2012r2** | Run server-with-catalog-windows-2012r2 test instance |
 | **rake maintainers:generate** | Generate MarkDown version of MAINTAINERS file |
 
 ### Chefspec and Test-Kitchen
