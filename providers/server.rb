@@ -34,12 +34,15 @@ use_inline_resources
 action :install do
   check_os_version
 
-  # TODO:  We should add a registry check here to see if the application has already been installed. This will help prevent
-  # multiple unnecessary downloads.
-  installed_version_reg_key = 'HKEY_LOCAL_MACHINE\SOFTWARE\Veeam\Veeam Backup server'
-  return new_resource.updated_by_last_action(false) if registry_key_exists?(installed_version_reg_key, :machine)
+  # We will use the Windows Helper 'is_package_installed?' to see if the Console is installed.
+  return new_resource.updated_by_last_action(false) if is_package_installed?('Veeam Backup & Replication')
 
-  raise ArgumentError, 'The Veeam Backup and Recovery EULA must be accepted.  Please set the node attribute [\'veeam\'][\'server\'][\'accept_eula\'] to \'true\' ' if new_resource.accept_eula.nil?
+  # We need to verify that .NET Framework 4.5.2 or higher has been installed on the machine
+  installed_version_reg_key = registry_get_values('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full')
+  current_dotnet_version = installed_version_reg_key.nil? ? 0 : installed_version_reg_key[6][:data]
+  raise 'The Veeam Backup and Recovery Console requires that Microsoft .NET Framework 4.5.2 or higher be installed.  Please install the Veeam pre-requisites' if current_dotnet_version < 379893
+
+  raise ArgumentError, 'The Veeam Backup and Recovery EULA must be accepted.  Please set the node attribute [\'veeam\'][\'server\'][\'accept_eula\'] to \'true\' ' unless new_resource.accept_eula == true
   raise ArgumentError, 'The VBR service password must be set if a username is supplied' if new_resource.vbr_service_user && new_resource.vbr_service_password.nil?
 
   package_save_dir = win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'package'))
