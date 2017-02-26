@@ -33,6 +33,7 @@ describe 'veeam::server' do
           end
 
           it 'converges successfully' do
+            expect(chef_run).to install_veeam_prerequisites('Install Veeam Prerequisites')
             expect(chef_run).to install_veeam_server('Install Veeam Backup Server')
             expect { chef_run }.not_to raise_error
           end
