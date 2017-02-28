@@ -37,7 +37,7 @@ action :install do
   # Check to see which of the pre-requisites have been installed
   sql_system_clr = is_package_installed?('Microsoft System CLR Types for SQL Server 2012 (x64)')
   sql_management_objects = is_package_installed?('Microsoft SQL Server 2012 Management Objects  (x64)')
-  sql_express = node['veeam']['server']['vbr_sqlserver_server'].nil? ? is_package_installed?('Microsoft SQL Server 2012 (64-bit)') : true
+  sql_express = new_resource.install_sql ? is_package_installed?('Microsoft SQL Server 2012 (64-bit)') : true
 
   return new_resource.updated_by_last_action(false) if sql_system_clr && sql_management_objects && sql_express && find_current_dotnet >= 379893
 
@@ -201,7 +201,7 @@ def install_sql_express(downloaded_file_name)
   config_file_path = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'ConfigurationFile.ini'))
 
   sql_sys_admin_list = 'NT AUTHORITY\SYSTEM'
-  sql_sys_admin_list = node['veeam']['server']['vbr_sqlserver_username'] if node['veeam']['server']['vbr_sqlserver_username']
+  sql_sys_admin_list = node['veeam']['server']['vbr_service_user'] if node['veeam']['server']['vbr_service_user']
 
   template config_file_path do
     backup false
