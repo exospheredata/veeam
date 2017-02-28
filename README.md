@@ -12,10 +12,31 @@
     - [Installation Media](#installation-media)
     - [Catalog](#catalog)
     - [Server](#server)
+  - [Resource/Provider](#resourceprovider)
+    - [Veeam_Prerequisites](#veeam_prerequisites)
+      - [Actions:](#actions)
+      - [Properties:](#properties)
+      - [Examples:](#examples)
+    - [Veeam_Catalog](#veeam_catalog)
+      - [Actions:](#actions-1)
+      - [Properties:](#properties-1)
+      - [Examples:](#examples-1)
+    - [Veeam_Console](#veeam_console)
+      - [Actions:](#actions-2)
+      - [Properties:](#properties-2)
+      - [Examples:](#examples-2)
+    - [Veeam_Server](#veeam_server)
+      - [Actions:](#actions-3)
+      - [Properties:](#properties-3)
+      - [Examples:](#examples-3)
   - [Usage](#usage)
     - [default](#default)
     - [catalog recipe](#catalog-recipe)
     - [server recipe](#server-recipe)
+    - [console recipe](#console-recipe)
+    - [server_with_catalog recipe](#server_with_catalog-recipe)
+    - [server_with_console recipe](#server_with_console-recipe)
+    - [standalone_complete recipe](#standalone_complete-recipe)
   - [Upload to Chef Server](#upload-to-chef-server)
   - [Matchers/Helpers](#matchershelpers)
     - [Matchers](#matchers)
@@ -167,6 +188,44 @@ veeam_catalog 'Install Veeam Backup Catalog' do
 end
 ```
 
+### Veeam_Console
+Installs the Veeam Backup and Recovery Console
+
+#### Actions:
+* `:install` - Installs the Veeam Backup and Recovery Console service
+
+#### Properties:
+_NOTE: properties in bold are required_
+* **`package_url`** - Full URL to the installation media
+* **`package_checksum`** - sha256 checksum of the installation media
+* **`accept_eula`** - Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA.  Default = false
+* `install_dir` - Sets the install directory for the Veeam Backup console service
+* `keep_media` - When set to true, the downloaded ISO will not be deleted.  This is helpful if you are installing multiple services on a single node.
+* `package_name` - FUTURE property
+* `share_path` - FUTURE property
+
+#### Examples:
+```ruby
+# A quick install of the console accepting all of the defaults
+veeam_console 'Install Veeam Backup console' do
+  package_url 'http://myartifactory/Veeam/installationmedia.iso'
+  package_checksum 'sha256checksum'
+  accept_eula true
+  action :install
+end
+```
+
+```ruby
+# Install of the console with to a custom installation directory
+veeam_console 'Install Veeam Backup console' do
+  package_url 'http://myartifactory/Veeam/installationmedia.iso'
+  package_checksum 'sha256checksum'
+  install_dir 'C:\Veeam\Console'
+  accept_eula true
+  action :install
+end
+```
+
 ### Veeam_Server
 Installs the Veeam Backup and Recovery Service
 
@@ -225,11 +284,27 @@ This is an empty recipe and should _not_ be used
 
 ### catalog recipe
 
-Installs and configures Veeam Backup and Recovery Catalog service using the default configuration
+Installs and configures Veeam Backup and Recovery Catalog service using the default configuration including pre-requisites
 
 ### server recipe
 
-Installs and configures Veeam Backup and Recovery Server service using the default configuration
+Installs and configures Veeam Backup and Recovery Server service using the default configuration including pre-requisites and SQLExpress
+
+### console recipe
+
+Installs and configures Veeam Backup and Recovery Console using the default configuration including pre-requisites
+
+### server_with_catalog recipe
+
+Installs and configures Veeam Backup and Recovery Server & Catalog using the default configuration including pre-requisites and SQLExpress
+
+### server_with_console recipe
+
+Installs and configures Veeam Backup and Recovery Server & Console using the default configuration including pre-requisites and SQLExpress
+
+### standalone_complete recipe
+
+Installs and configures Veeam Backup and Recovery Server, Console & the Catalog service using the default configuration including pre-requisites and SQLExpress
 
 ## Upload to Chef Server
 This cookbook should be included in each organization of your CHEF environment.  When importing, leverage Berkshelf:
@@ -247,6 +322,7 @@ _Note: Matchers should always be created in `libraries/matchers.rb` and used for
 
 **Tests the LWRP (veeam_catalog) with an action**
 * `install_veeam_catalog(resource_name)`
+* `install_veeam_console(resource_name)`
 * `install_veeam_server(resource_name)`
 * `install_veeam_prerequisites(resource_name)`
 
@@ -301,8 +377,11 @@ This repo includes a **Rakefile** for common tasks
 | **rake unit** | Run ChefSpec examples |
 | **rake integration** | Run all kitchen suites |
 | **rake integration:kitchen:catalog-windows-2012r2** | Run catalog-windows-2012r2 test instance |
+| **rake integration:kitchen:console-windows-2012r2** | Run console-windows-2012r2 test instance |
 | **rake integration:kitchen:server-windows-2012r2** | Run server-windows-2012r2 test instance |
 | **rake integration:kitchen:server-with-catalog-windows-2012r2** | Run server-with-catalog-windows-2012r2 test instance |
+| **rake integration:kitchen:server-with-console-windows-2012r2** | Run server-with-console-windows-2012r2 test instance |
+| **rake integration:kitchen:standalone-complete-windows-2012r2** | Run standalone-complete-windows-2012r2 test instance |
 | **rake maintainers:generate** | Generate MarkDown version of MAINTAINERS file |
 
 ### Chefspec and Test-Kitchen
