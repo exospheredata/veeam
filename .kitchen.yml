@@ -2,10 +2,17 @@
 driver:
   name: vagrant
   gui: false
+  #  Veeam Backup Server requires a minimum of 2 CPU and 4GB of RAM
+  customize:
+    cpus: 2
+    memory: 4096
 
 provisioner:
   name: chef_zero
   data_bags_path: "../../data_bags/"
+  # You many wish to test your CHEF::Log.<level> messages while using test-kitche.  Change the below
+  # value to the level of choice.  For cleaner output, comment this option out.
+  log_level: info
   # You may wish to disable always updating cookbooks in CI or other testing environments.
   # For example:
   #   always_update_cookbooks: <%= !ENV['CI'] %>
@@ -23,6 +30,9 @@ verifier:
 
 platforms:
   - name: windows-2012r2
+    transport:
+      name: winrm
+      elevated: true
 
 suites:
   - name: catalog
@@ -30,39 +40,64 @@ suites:
       - recipe[veeam::catalog]
     verifier:
       inspec_tests:
-        - test/inspec/catalog
+        - test/inspec/9.0.0.902/catalog
     attributes:
-  - name: server
+  - name: console
     run_list:
-      - recipe[veeam::server]
-    driver:
-      #  Veeam Backup Server requires a minimum of 2 CPU and 4GB of RAM
-      customize:
-        cpus: 2
-        memory: 4096
+      - recipe[veeam::console]
     verifier:
       inspec_tests:
-        - test/inspec/server
+        - test/inspec/9.0.0.902/console
+    attributes:
+      veeam:
+        console:
+          accept_eula: true
+  - name: server
+    run_list:
+      # - recipe[vagrant_windows_prep]
+      - recipe[veeam::server]
+    verifier:
+      inspec_tests:
+        - test/inspec/9.0.0.902/server
     attributes:
       veeam:
         server:
           accept_eula: true
-  - name: server_with_catalog
+  - name: server_with_console
     run_list:
-      - recipe[veeam::catalog]
-      - recipe[veeam::server]
-    driver:
-      #  Veeam Backup Server requires a minimum of 2 CPU and 4GB of RAM
-      customize:
-        cpus: 2
-        memory: 4096
+      - recipe[veeam::server_with_console]
     verifier:
       inspec_tests:
-        - test/inspec/catalog
-        - test/inspec/server
+        - test/inspec/9.0.0.902/server
+        - test/inspec/9.0.0.902/console
     attributes:
       veeam:
-        catalog:
-          keep_media: true
         server:
+          accept_eula: true
+        console:
+          accept_eula: true
+  - name: server_with_catalog
+    run_list:
+      - recipe[veeam::server_with_catalog]
+    verifier:
+      inspec_tests:
+        - test/inspec/9.0.0.902/catalog
+        - test/inspec/9.0.0.902/server
+    attributes:
+      veeam:
+        server:
+          accept_eula: true
+  - name: standalone_complete
+    run_list:
+      - recipe[veeam::standalone_complete]
+    verifier:
+      inspec_tests:
+        - test/inspec/9.0.0.902/catalog
+        - test/inspec/9.0.0.902/server
+        - test/inspec/9.0.0.902/console
+    attributes:
+      veeam:
+        server:
+          accept_eula: true
+        console:
           accept_eula: true
