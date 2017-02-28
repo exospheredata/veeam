@@ -11,4 +11,9 @@ control 'catalog-feature-installed' do
     it { should be_running }
     its('startmode') { should match('Auto') }
   end
+
+  describe package('Veeam Backup Catalog') do
+    it { should be_installed }
+    its('version') { should eq '9.0.0.902' }
+  end
 end

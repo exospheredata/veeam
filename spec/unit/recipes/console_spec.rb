@@ -1,12 +1,12 @@
 #
 # Cookbook Name:: veeam
-# Spec:: server
+# Spec:: catalog
 #
 # Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
 
 require 'spec_helper'
 
-describe 'veeam::server' do
+describe 'veeam::catalog' do
   before do
     mock_windows_system_framework # Windows Framework Helper from 'spec/windows_helper.rb'
     stub_command('sc.exe query W3SVC').and_return 1
@@ -34,7 +34,7 @@ describe 'veeam::server' do
 
           it 'converges successfully' do
             expect(chef_run).to install_veeam_prerequisites('Install Veeam Prerequisites')
-            expect(chef_run).to install_veeam_server('Install Veeam Backup Server')
+            expect(chef_run).to install_veeam_catalog('Install Veeam Backup Catalog')
             expect { chef_run }.not_to raise_error
           end
         end
