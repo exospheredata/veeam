@@ -54,7 +54,6 @@ suites:
           accept_eula: true
   - name: server
     run_list:
-      # - recipe[vagrant_windows_prep]
       - recipe[veeam::server]
     verifier:
       inspec_tests:
