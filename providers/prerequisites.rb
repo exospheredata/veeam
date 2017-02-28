@@ -34,8 +34,12 @@ use_inline_resources
 action :install do
   check_os_version
 
-  # TODO:  We should add a registry check here to see if the application has already been installed. This will help prevent
-  # multiple unnecessary downloads.
+  # Check to see which of the pre-requisites have been installed
+  sql_system_clr = is_package_installed?('Microsoft System CLR Types for SQL Server 2012 (x64)')
+  sql_management_objects = is_package_installed?('Microsoft SQL Server 2012 Management Objects  (x64)')
+  sql_express = new_resource.install_sql ? is_package_installed?('Microsoft SQL Server 2012 (64-bit)') : true
+
+  return new_resource.updated_by_last_action(false) if sql_system_clr && sql_management_objects && sql_express && find_current_dotnet >= 379893
 
   package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
@@ -130,11 +134,13 @@ def get_media_installer_location(downloaded_file_name)
   output
 end
 
-def install_dotnet(downloaded_file_name)
+def find_current_dotnet
   installed_version_reg_key = registry_get_values('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full')
-  current_dotnet_version = installed_version_reg_key.nil? ? 0 : installed_version_reg_key[6][:data]
+  installed_version_reg_key.nil? ? 0 : installed_version_reg_key[6][:data]
+end
 
-  return 'Already installed' if current_dotnet_version >= 379893
+def install_dotnet(downloaded_file_name)
+  return 'Already installed' if find_current_dotnet >= 379893
   reboot 'DotNet Install Complete' do
     reason 'Reboot required after an installation of .NET Framework'
     action :nothing
@@ -159,11 +165,11 @@ end
 
 def install_sql_tools(downloaded_file_name)
   prerequisites = {
-    'Microsoft SQL Server System CLR Types (x64)' => {
+    'Microsoft System CLR Types for SQL Server 2012 (x64)' => {
       'installer' => 'SQLSysClrTypes.msi',
       'checksum' => '674c396e9c9bf389dd21cec0780b3b4c808ff50c570fa927b07fa620db7d4537'
     },
-    'Microsoft SQL Server 2012 Management Objects (x64)' => {
+    'Microsoft SQL Server 2012 Management Objects  (x64)' => {
       'installer' => 'SharedManagementObjects.msi',
       'checksum' => 'ed753d85b51e7eae381085cad3dcc0f29c0b72f014f8f8fba1ad4e0fe387ce0a'
     }
@@ -190,13 +196,12 @@ def install_sql_tools(downloaded_file_name)
 end
 
 def install_sql_express(downloaded_file_name)
-  return 'Skip Sql Install' unless node['veeam']['server']['vbr_sqlserver_server'].nil?
   installed_version_reg_key = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\\MSSQL11.SQLEXPRESS\MSSQLServer\CurrentVersion'
   return 'Already Installed' if registry_key_exists?(installed_version_reg_key, :machine)
   config_file_path = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'ConfigurationFile.ini'))
 
   sql_sys_admin_list = 'NT AUTHORITY\SYSTEM'
-  sql_sys_admin_list = node['veeam']['server']['vbr_sqlserver_username'] if node['veeam']['server']['vbr_sqlserver_username']
+  sql_sys_admin_list = node['veeam']['server']['vbr_service_user'] if node['veeam']['server']['vbr_service_user']
 
   template config_file_path do
     backup false

@@ -1,5 +1,5 @@
 # Cookbook Name:: veeam
-# Provider:: server
+# Provider:: console
 #
 # Author:: Jeremy Goodrum
 # Email:: chef@exospheredata.com
@@ -34,16 +34,16 @@ use_inline_resources
 action :install do
   check_os_version
 
-  # We will use the Windows Helper 'is_package_installed?' to see if the Server is installed.
-  return new_resource.updated_by_last_action(false) if is_package_installed?('Veeam Backup & Replication Server')
+  # We will use the Windows Helper 'is_package_installed?' to see if the Console is installed.
+  return new_resource.updated_by_last_action(false) if is_package_installed?('Veeam Backup & Replication Console')
 
   # We need to verify that .NET Framework 4.5.2 or higher has been installed on the machine
   installed_version_reg_key = registry_get_values('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full')
   current_dotnet_version = installed_version_reg_key.nil? ? 0 : installed_version_reg_key[6][:data]
-  raise 'The Veeam Backup and Recovery Server requires that Microsoft .NET Framework 4.5.2 or higher be installed.  Please install the Veeam pre-requisites' if current_dotnet_version < 379893
+  raise 'The Veeam Backup and Recovery Console requires that Microsoft .NET Framework 4.5.2 or higher be installed.  Please install the Veeam pre-requisites' if current_dotnet_version < 379893
 
-  raise ArgumentError, 'The Veeam Backup and Recovery EULA must be accepted.  Please set the node attribute [\'veeam\'][\'server\'][\'accept_eula\'] to \'true\' ' unless new_resource.accept_eula == true
-  raise ArgumentError, 'The VBR service password must be set if a username is supplied' if new_resource.vbr_service_user && new_resource.vbr_service_password.nil?
+  # The EULA must be explicitly accepted.
+  raise ArgumentError, 'The Veeam Backup and Recovery EULA must be accepted.  Please set the node attribute [\'veeam\'][\'console\'][\'accept_eula\'] to \'true\' ' if new_resource.accept_eula.nil? || new_resource.accept_eula == false
 
   package_save_dir = win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'package'))
 
@@ -80,11 +80,11 @@ action :install do
       not_if "[boolean] (Get-DiskImage -ImagePath '#{downloaded_file_name}').DevicePath"
     end
 
-    ruby_block 'Install the Backup server application' do
+    ruby_block 'Install the Backup console application' do
       block do
-        Chef::Log.debug 'Installing Veeam Backup and Recovery server'
+        Chef::Log.debug 'Installing Veeam Backup and Recovery console'
         install_media_path = get_media_installer_location(downloaded_file_name)
-        perform_server_install(install_media_path)
+        perform_console_install(install_media_path)
       end
       action :run
     end
@@ -147,8 +147,8 @@ def get_media_installer_location(downloaded_file_name)
   output
 end
 
-def perform_server_install(install_media_path)
-  Chef::Log.debug 'Installing Veeam Backup server service... begin'
+def perform_console_install(install_media_path)
+  Chef::Log.debug 'Installing Veeam Backup console service... begin'
   # In this case, we have many possible combinations of extra arugments that would need to be passed to the installer.
   # The process will create a usable string formatted to support those optional arguments. It seemed safer to attempt
   # to do all of this work inside of Ruby rather than the back and forth with PowerShell scripts. Note that each of these
@@ -156,30 +156,15 @@ def perform_server_install(install_media_path)
   xtra_arguments = ''
   xtra_arguments.concat(" ACCEPTEULA=\"#{new_resource.accept_eula ? 'YES' : 'NO'}\" ") unless new_resource.accept_eula.nil?
   xtra_arguments.concat(" INSTALLDIR=\"#{new_resource.install_dir} \" ") unless new_resource.install_dir.nil?
-  xtra_arguments.concat(" VBR_LICENSE_FILE=\"#{new_resource.vbr_license_file} \" ") unless new_resource.vbr_license_file.nil?
-  xtra_arguments.concat(" VBR_CHECK_UPDATES=\"#{new_resource.vbr_check_updates ? 1 : 0} \" ") unless new_resource.vbr_check_updates.nil?
-  # VBR Service Configuration
-  xtra_arguments.concat(" VBR_SERVICE_USER=\"#{new_resource.vbr_service_user}\" ") unless new_resource.vbr_service_user.nil?
-  xtra_arguments.concat(" VBR_SERVICE_PASSWORD=\"#{new_resource.vbr_service_password}\" ") unless new_resource.vbr_service_password.nil?
-  xtra_arguments.concat(" VBR_SERVICE_PORT=\"#{new_resource.vbr_service_port}\" ") unless new_resource.vbr_service_port.nil?
-  xtra_arguments.concat(" VBR_SECURE_CONNECTIONS_PORT=\"#{new_resource.vbr_secure_connections_port}\" ") unless new_resource.vbr_secure_connections_port.nil?
-  xtra_arguments.concat(" VBR_SERVICE_PORT=\"#{new_resource.vbr_service_port}\" ") unless new_resource.vbr_service_port.nil?
-  # SQL Server Connection Details
-  xtra_arguments.concat(" VBR_SQLSERVER_SERVER=\"#{new_resource.vbr_sqlserver_server}\" ") unless new_resource.vbr_sqlserver_server.nil?
-  xtra_arguments.concat(" VBR_SQLSERVER_DATABASE=\"#{new_resource.vbr_sqlserver_database}\" ") unless new_resource.vbr_sqlserver_database.nil?
-  xtra_arguments.concat(" VBR_SQLSERVER_AUTHENTICATION=\"#{new_resource.vbr_sqlserver_auth}\" ") unless new_resource.vbr_sqlserver_auth.nil?
-  xtra_arguments.concat(" VBR_SQLSERVER_USERNAME=\"#{new_resource.vbr_sqlserver_username}\" ") unless new_resource.vbr_sqlserver_username.nil?
-  xtra_arguments.concat(" VBR_SQLSERVER_PASSWORD=\"#{new_resource.vbr_sqlserver_password}\" ") unless new_resource.vbr_sqlserver_password.nil?
-  xtra_arguments.concat(" PF_AD_NFSDATASTORE=\"#{new_resource.pf_ad_nfsdatastore}\" ") unless new_resource.pf_ad_nfsdatastore.nil?
 
   cmd_str = <<-EOH
-    $veeam_backup_server_installer = ( "#{install_media_path}\\Backup\\Server.x64.msi")
-    Write-Host (' /qn /i ' + $veeam_backup_server_installer + ' #{xtra_arguments}')
-    $output = (Start-Process -FilePath "msiexec.exe" -ArgumentList $(' /qn /i ' + $veeam_backup_server_installer + ' #{xtra_arguments}') -Wait -Passthru -ErrorAction Stop)
+    $veeam_backup_console_installer = ( "#{install_media_path}\\Backup\\Shell.x64.msi")
+    Write-Host (' /qn /i ' + $veeam_backup_console_installer + ' #{xtra_arguments}')
+    $output = (Start-Process -FilePath "msiexec.exe" -ArgumentList $(' /qn /i ' + $veeam_backup_console_installer + ' #{xtra_arguments}') -Wait -Passthru -ErrorAction Stop)
     if ( $output.ExitCode -ne 0){
-      throw ("The install failed with ExitCode [{0}].  The package is {1}" -f $output.ExitCode, $veeam_backup_server_installer )
+      throw ("The install failed with ExitCode [{0}].  The package is {1}" -f $output.ExitCode, $veeam_backup_console_installer )
     }
   EOH
   validate_powershell_out(cmd_str)
-  Chef::Log.debug 'Installing Veeam Backup server service... success'
+  Chef::Log.debug 'Installing Veeam Backup console service... success'
 end

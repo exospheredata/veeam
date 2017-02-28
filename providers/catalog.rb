@@ -34,10 +34,13 @@ use_inline_resources
 action :install do
   check_os_version
 
-  # TODO:  We should add a registry check here to see if the application has already been installed. This will help prevent
-  # multiple unnecessary downloads.
-  installed_version_reg_key = 'HKEY_LOCAL_MACHINE\SOFTWARE\Veeam\Veeam Backup Catalog'
-  return new_resource.updated_by_last_action(false) if registry_key_exists?(installed_version_reg_key, :machine)
+  # We will use the Windows Helper 'is_package_installed?' to see if the Server is installed.
+  return new_resource.updated_by_last_action(false) if is_package_installed?('Veeam Backup Catalog')
+
+  # We need to verify that .NET Framework 4.5.2 or higher has been installed on the machine
+  installed_version_reg_key = registry_get_values('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full')
+  current_dotnet_version = installed_version_reg_key.nil? ? 0 : installed_version_reg_key[6][:data]
+  raise 'The Veeam Backup and Recovery Server requires that Microsoft .NET Framework 4.5.2 or higher be installed.  Please install the Veeam pre-requisites' if current_dotnet_version < 379893
 
   raise ArgumentError, 'The VBRC service password must be set if a username is supplied' if new_resource.vbrc_service_user && new_resource.vbrc_service_password.nil?
 
