@@ -11,6 +11,7 @@ describe 'veeam::server' do
     mock_windows_system_framework # Windows Framework Helper from 'spec/windows_helper.rb'
     stub_command('sc.exe query W3SVC').and_return 1
     stub_command(/Get-DiskImage/).and_return(false)
+    stub_data_bag_item('veeam', 'license').and_return(nil)
   end
   context 'Install prequisite components' do
     platforms = {

@@ -6,7 +6,7 @@
 
 default['veeam']['server']['accept_eula'] = false
 default['veeam']['server']['install_dir'] = 'C:\\Program Files\\Veeam\\Backup and Replication\\'
-default['veeam']['server']['vbr_license_file'] = nil
+default['veeam']['server']['evaluation'] = true
 default['veeam']['server']['vbr_check_updates'] = nil
 # VBR Service Configuration
 default['veeam']['server']['vbr_service_user'] = nil

@@ -33,6 +33,7 @@ attribute :package_checksum, kind_of: String
 
 attribute :accept_eula, kind_of: [TrueClass, FalseClass], default: false, required: true
 attribute :install_dir, kind_of: String
+attribute :evaluation, kind_of: [TrueClass, FalseClass], default: true
 attribute :vbr_license_file, kind_of: String
 attribute :vbr_check_updates, [Integer, TrueClass, FalseClass]
 
