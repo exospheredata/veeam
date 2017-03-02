@@ -25,6 +25,10 @@ describe 'veeam::catalog' do
             Fauxhai.mock(platform: platform, version: version)
             allow(Chef::Config).to receive(:file_cache_path)
               .and_return('...')
+            # Need to set a valid .NET Framework version
+            allow_any_instance_of(Chef::DSL::RegistryHelper)
+              .to receive(:registry_get_values)
+              .and_return([{}, {}, {}, {}, {}, {}, { data: 379893 }])
           end
 
           let(:runner) do

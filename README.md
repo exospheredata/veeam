@@ -12,6 +12,7 @@
     - [Installation Media](#installation-media)
     - [Catalog](#catalog)
     - [Server](#server)
+  - [Veeam Backup and Recovery License file](#veeam-backup-and-recovery-license-file)
   - [Resource/Provider](#resourceprovider)
     - [Veeam_Prerequisites](#veeam_prerequisites)
       - [Actions:](#actions)
@@ -79,6 +80,7 @@ Windows 2008R2 and lower is _not_ supported.
 ### Installation Media
 - `node['veeam']['installer']['package_url']` - String.  Custom URL for the Veeam Backup and Recovery ISO.  Default path is 'http://download2.veeam.com/VeeamBackup&Replication_9.0.0.902.iso'
 - `node['veeam']['installer']['package_checksum']` - String.  Sha256 hash of the remote ISO file.  Default value is '21f9d2c318911e668511990b8bbd2800141a7764cc97a8b78d4c2200c1225c88'
+- `node['veeam']['license_url']` - String.  URL for downloading the license filed used by this server.  Default value is nil.
 
 ### Catalog
 - `node['veeam']['catalog']['install_dir']` - String. Installs the component to the specified location. By default, Veeam Backup & Replication uses the Backup Catalog subfolder in the `C:\Program Files\Veeam\Backup and Replication\` folder.
@@ -91,7 +93,7 @@ Windows 2008R2 and lower is _not_ supported.
 ### Server
 - `node['veeam']['server']['accept_eula']` - TrueFalse.  Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA.  Default = false
 - `node['veeam']['server']['install_dir']` - String. Installs the component to the specified location. By default, Veeam Backup & Replication uses the Backup Catalog subfolder in the `C:\Program Files\Veeam\Backup and Replication\` folder.
-- `node['veeam']['server']['vbr_license_file']` -
+- `node['veeam']['server']['evaluation']` - Determines if the Veeam Backup and Recovery server should be installed using Evaluation Mode or if a license should be attached.  Default value is true and the server will be installed with no license.
 - `node['veeam']['server']['vbr_check_updates']` - TrueFalse. Specifies if you want Veeam Backup & Replication to automatically check for new product patches and versions.
 - `node['veeam']['server']['vbr_service_user']` - String. Specifies the account under which the Veeam Backup Service will run. The account must have full control NTFS permissions on the `VBRCatalog` folder where index files are stored and the Database owner rights for the configuration database on the Microsoft SQL Server where the configuration database is deployed.  If you do not specify this parameter, the Veeam Guest Catalog Service will run under the Local System account.  NOTE: The account must be in Domain\User or Computer\User format.  If using a local account, then use either the `hostname\username` or use `.\username`
 - `node['veeam']['server']['vbr_service_password']` - String. Specifies a password for the account under which the Veeam Guest Backup Service will run.  This parameter must be used if you have specified the `VBR_SERVICE_USER` parameter.
@@ -107,6 +109,20 @@ Windows 2008R2 and lower is _not_ supported.
 - `node['veeam']['server']['keep_media']` - TrueFalse.  Determines if the recipe should remove the media at the end of the installation.  Default is false
 
 - `node['sql_server']['server_sa_password']` - String.  Configures the SQL Admin password for the SQLExpress instance.  Default value is 'Veeam1234'
+
+## Veeam Backup and Recovery License file
+The server must be licensed to unlock the full potential of the application.  The attribute `node['veeam']['server']['evaluation']` should be configured as `false`.  To license, choose one of the below options.
+
+1. Save the license file on a web server to which the Veeam Backup and Recovery server can access.  Set the `node['veeam']['license_url']` attribute to include the full path to the license file.
+2. Encode the license file as a Base64 string and create a new DataBag `veeam` with an Item `license`.  Add the key license with the value as the Base64 encoded string.
+
+```json
+{
+  "id": "license",
+  "license": "base64_encoded_license"
+}
+```
+
 
 ## Resource/Provider
 
@@ -238,7 +254,7 @@ _NOTE: properties in bold are required_
 * **`package_checksum`** - sha256 checksum of the installation media
 * **`accept_eula`** - Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA.  Default = false
 * `install_dir` - Sets the install directory for the Veeam Backup and Recovery service
-* `vbr_license_file` - Future Property
+* `evaluation` - Determines if the Veeam Backup and Recovery server should be installed using Evaluation Mode or if a license should be attached.
 * `vbr_check_updates` - Specifies if you want Veeam Backup & Replication to automatically check for new product patches and versions.
 * `vbr_service_user` - Specifies a user account under which the Veeam Guest Backup Service will run
 * `vbr_service_password` - Specifies a password for the account under which the Veeam Guest Backup Service will run
