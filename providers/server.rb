@@ -47,6 +47,8 @@ action :install do
 
   package_save_dir = win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'package'))
 
+  new_resource.vbr_license_file = find_vbr_license unless new_resource.evaluation
+
   # This will only create the directory if it does not exist which is likely the case if we have
   # never performed a remote_file install.
   directory package_save_dir do
@@ -145,6 +147,37 @@ def get_media_installer_location(downloaded_file_name)
   raise ArgumentError, 'Unable to find the Veeam installation media' unless output
   Chef::Log.debug "Found the Veeam installation media at Drive Letter [#{output}]"
   output
+end
+
+def find_vbr_license
+  license_file = win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'Veeam-license-file.lic'))
+
+  if node['veeam']['license_url']
+    remote_file license_file do
+      source node['veeam']['license_url']
+      sensitive true
+      provider Chef::Provider::File::RemoteFile
+      action :create
+    end
+  else
+    # So this is a bit of a workaround to deal with checking to see if a data bag exists and
+    # more importantly to see if the item exists.  The BEGIN..RESCUE will prevent accidental
+    # failures
+    #
+    begin
+      veeam_license_bag = data_bag_item('veeam', 'license')
+    rescue StandardError
+      Chef::Log.info('The DataBagItem(\'license\') was not found.  Installing the package in Evaluation Mode.')
+      return nil # Return nothing since the data_bag was not found or the item does not exist
+    end
+    file license_file do
+      content Base64.decode64(veeam_license_bag['license'])
+      sensitive false
+      provider Chef::Provider::File
+      action :create
+    end
+  end
+  license_file
 end
 
 def perform_server_install(install_media_path)
