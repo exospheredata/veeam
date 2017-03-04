@@ -53,4 +53,5 @@ attribute :vbr_sqlserver_password, kind_of: String
 # Specifies the vPower NFS root folder to which Instant VM Recovery cache will be stored
 attribute :pf_ad_nfsdatastore, kind_of: String
 
+attribute :version, kind_of: String, required: true
 attribute :keep_media, kind_of: [TrueClass, FalseClass], default: false

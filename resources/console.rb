@@ -34,4 +34,5 @@ attribute :package_checksum, kind_of: String
 attribute :accept_eula, kind_of: [TrueClass, FalseClass], default: false, required: true
 attribute :install_dir, kind_of: String
 
+attribute :version, kind_of: String, required: true
 attribute :keep_media, kind_of: [TrueClass, FalseClass], default: false

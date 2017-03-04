@@ -71,25 +71,7 @@ describe 'veeam::server' do
               node.override['veeam']['server']['install_dir'] = 'C:\\Veeam\\Backupserver'
               expect { chef_run }.not_to raise_error
             end
-          end
-          context 'fails' do
-            before do
-              Fauxhai.mock(platform: platform, version: version)
-              node.normal['veeam']['server']['accept_eula'] = true
-              # Need to set a valid .NET Framework version
-              allow_any_instance_of(Chef::DSL::RegistryHelper)
-                .to receive(:registry_get_values)
-                .and_return([{}, {}, {}, {}, {}, {}, { data: 379893 }])
-            end
-
-            let(:runner) do
-              ChefSpec::SoloRunner.new(platform: platform, version: version, file_cache_path: '/tmp/cache', step_into: ['veeam_server'])
-            end
-            let(:node) { runner.node }
-            let(:chef_run) { runner.converge(described_recipe) }
-
             it 'raises an error about .NET Framework' do
-              # Mock that no .NET Framework exists
               allow_any_instance_of(Chef::DSL::RegistryHelper)
                 .to receive(:registry_get_values)
                 .and_return(nil)
@@ -97,7 +79,12 @@ describe 'veeam::server' do
             end
             it 'raises an error when EULA not accepted' do
               node.normal['veeam']['server']['accept_eula'] = false
+              # Need to set a valid .NET Framework version
               expect { chef_run }.to raise_error(ArgumentError, /The Veeam Backup and Recovery EULA must be accepted/)
+            end
+            it 'returns an Argument error when invalid Veeam version supplied' do
+              node.override['veeam']['version'] = '1.0'
+              expect { chef_run }.to raise_error(ArgumentError, /You must provide a package URL or choose a valid version/)
             end
             it 'returns an Argument error when no password supplied' do
               node.override['veeam']['server']['vbr_service_user'] = 'user1'
