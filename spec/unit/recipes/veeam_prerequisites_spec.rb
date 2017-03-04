@@ -56,6 +56,10 @@ describe 'veeam::server' do
             stub_command(/Get-DiskImage/).and_return(true)
             expect(chef_run).to run_powershell_script('Dismount Veeam media')
           end
+          it 'returns an Argument error when invalid Veeam version supplied' do
+            node.override['veeam']['version'] = '1.0'
+            expect { chef_run }.to raise_error(ArgumentError, /You must provide a package URL or choose a valid version/)
+          end
         end
       end
     end

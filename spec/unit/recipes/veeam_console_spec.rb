@@ -68,29 +68,20 @@ describe 'veeam::console' do
               node.normal['veeam']['console']['install_dir'] = 'C:\\Veeam\\Backupconsole'
               expect { chef_run }.not_to raise_error
             end
-          end
-          context 'fails' do
-            before do
-              Fauxhai.mock(platform: platform, version: version)
-            end
-
-            let(:runner) do
-              ChefSpec::SoloRunner.new(platform: platform, version: version, file_cache_path: '/tmp/cache', step_into: ['veeam_console'])
-            end
-            let(:node) { runner.node }
-            let(:chef_run) { runner.converge(described_recipe) }
-
             it 'raises an error about .NET Framework' do
-              node.normal['veeam']['console']['accept_eula'] = true
+              allow_any_instance_of(Chef::DSL::RegistryHelper)
+                .to receive(:registry_get_values)
+                .and_return(nil)
               expect { chef_run }.to raise_error(RuntimeError, /Microsoft .NET Framework 4.5.2 or higher be installed/)
             end
             it 'raises an error when EULA not accepted' do
               node.normal['veeam']['console']['accept_eula'] = false
               # Need to set a valid .NET Framework version
-              allow_any_instance_of(Chef::DSL::RegistryHelper)
-                .to receive(:registry_get_values)
-                .and_return([{}, {}, {}, {}, {}, {}, { data: 379893 }])
               expect { chef_run }.to raise_error(ArgumentError, /The Veeam Backup and Recovery EULA must be accepted/)
+            end
+            it 'returns an Argument error when invalid Veeam version supplied' do
+              node.override['veeam']['version'] = '1.0'
+              expect { chef_run }.to raise_error(ArgumentError, /You must provide a package URL or choose a valid version/)
             end
           end
         end

@@ -32,7 +32,8 @@ use_inline_resources
 ::Chef::Provider.send(:include, Windows::Helper)
 
 action :install do
-  check_os_version
+  veeam = Veeam::Helper # Library of helper methods
+  veeam.check_os_version(node)
 
   # Check to see which of the pre-requisites have been installed
   sql_system_clr = is_package_installed?('Microsoft System CLR Types for SQL Server 2012 (x64)')
@@ -49,8 +50,15 @@ action :install do
     action :create
   end
 
-  # Start by determining if this is a download or we need to mount the media via CIFS
-  raise ArgumentError, 'You must provide a package URL' unless new_resource.package_url
+  # Call the Veeam::Helper to find the correct URL based on the version of the Veeam Backup and Recovery edition passed
+  # as an attribute.
+  unless new_resource.package_url
+    new_resource.package_url = veeam.find_package_url(new_resource.version)
+    new_resource.package_checksum = veeam.find_package_checksum(new_resource.version)
+  end
+
+  # Halt this process now.  There is no URL for the package.
+  raise ArgumentError, 'You must provide a package URL or choose a valid version' unless new_resource.package_url
 
   # Since we are passing a URL, it is important that we handle the pull of the file as well as extraction.
   # We likely will receive an ISO but it is possible that we will have a ZIP or other compressed file type.
@@ -74,19 +82,17 @@ action :install do
   new_resource.updated_by_last_action(true)
 end
 
+def find_current_dotnet
+  installed_version_reg_key = registry_get_values('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full')
+  installed_version_reg_key.nil? ? 0 : installed_version_reg_key[6][:data]
+end
+
 def validate_powershell_out(script)
   # This seemed like the DRYest way to handle the output handling from PowerShell.
   cmd = powershell_out(script)
   # Check powershell output
   raise cmd.inspect if cmd.stderr != ''
   cmd.stdout.chop
-end
-
-def check_os_version
-  # Return True otherwise raise an exeption.  This is the cleanest way to handle minimum versions.  We might add
-  # a secondary check for highest version at some point.
-  return if node['platform_version'].to_f >= '6.1'.to_f # '6.1.' is the numeric platform_version for Windows 2008R2
-  raise ArgumentError, 'Veeam Backup and recovery management requires a Windows 2008R2 or higher host!'
 end
 
 def download_installer(downloaded_file_name)
@@ -132,11 +138,6 @@ def get_media_installer_location(downloaded_file_name)
   raise ArgumentError, 'Unable to find the Veeam installation media' unless output
   Chef::Log.debug "Found the Veeam installation media at Drive Letter [#{output}]"
   output
-end
-
-def find_current_dotnet
-  installed_version_reg_key = registry_get_values('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full')
-  installed_version_reg_key.nil? ? 0 : installed_version_reg_key[6][:data]
 end
 
 def install_dotnet(downloaded_file_name)

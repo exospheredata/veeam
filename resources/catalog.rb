@@ -37,4 +37,5 @@ attribute :vbrc_service_user, kind_of: String
 attribute :vbrc_service_password, kind_of: String
 attribute :vbrc_service_port, kind_of: Integer
 
+attribute :version, kind_of: String, required: true
 attribute :keep_media, kind_of: [TrueClass, FalseClass], default: false
