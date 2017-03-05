@@ -12,6 +12,7 @@
     - [Installation Media](#installation-media)
     - [Catalog](#catalog)
     - [Server](#server)
+  - [Veeam Backup and Recovery ISO](#veeam-backup-and-recovery-iso)
   - [Veeam Backup and Recovery License file](#veeam-backup-and-recovery-license-file)
   - [Resource/Provider](#resourceprovider)
     - [Veeam_Prerequisites](#veeam_prerequisites)
@@ -78,9 +79,10 @@ Windows 2008R2 and lower is _not_ supported.
 
 ## Attributes
 ### Installation Media
-- `node['veeam']['installer']['package_url']` - String.  Custom URL for the Veeam Backup and Recovery ISO.  Default path is 'http://download2.veeam.com/VeeamBackup&Replication_9.0.0.902.iso'
-- `node['veeam']['installer']['package_checksum']` - String.  Sha256 hash of the remote ISO file.  Default value is '21f9d2c318911e668511990b8bbd2800141a7764cc97a8b78d4c2200c1225c88'
-- `node['veeam']['license_url']` - String.  URL for downloading the license filed used by this server.  Default value is nil.
+- `node['veeam']['version']` - String.  Base version of Veeam to install and used to download the appropriate ISO.  Supported versions are '9.0' and '9.5'  Default value is '9.0'.
+- `node['veeam']['installer']['package_url']` - String.  Custom URL for the Veeam Backup and Recovery ISO.  Default value is nil
+- `node['veeam']['installer']['package_checksum']` - String.  Sha256 hash of the remote ISO file.  Default value is nil
+- `node['veeam']['license_url']` - String.  URL for downloading the license filed used by this server.  If not provided, the default data_bag will be checked or the software will be installed in evaluation mode.  Default value is nil.
 
 ### Catalog
 - `node['veeam']['catalog']['install_dir']` - String. Installs the component to the specified location. By default, Veeam Backup & Replication uses the Backup Catalog subfolder in the `C:\Program Files\Veeam\Backup and Replication\` folder.
@@ -110,6 +112,13 @@ Windows 2008R2 and lower is _not_ supported.
 
 - `node['sql_server']['server_sa_password']` - String.  Configures the SQL Admin password for the SQLExpress instance.  Default value is 'Veeam1234'
 
+## Veeam Backup and Recovery ISO
+The attribute `node['veeam']['version']` is used to evaluate the ISO download path and checksum for the installation media.  When provided, the version selected will be downloaded based on the has found in `libraries/helper.rb`.  This media can be overridden by providing the appropriate installation media attributes - `node['veeam']['installer']['package_url']` and `node['veeam']['installer']['package_checksum']`.  By default, these attributes are `nil` and the system will download the ISO every time.
+
+| Version | ISO URL | SHA256 |
+| ------------- |-------------|-------------|
+| **9.0** | [VeeamBackup&Replication_9.0.0.902.iso](http://download2.veeam.com/VeeamBackup&Replication_9.0.0.902.iso) | 21f9d2c318911e668511990b8bbd2800141a7764cc97a8b78d4c2200c1225c88 |
+
 ## Veeam Backup and Recovery License file
 The server must be licensed to unlock the full potential of the application.  The attribute `node['veeam']['server']['evaluation']` should be configured as `false`.  To license, choose one of the below options.
 
@@ -138,28 +147,28 @@ Installs the required resoures to support Veeam applications.  Included in this 
 
 #### Properties:
 _NOTE: properties in bold are required_
-* **`package_url`** - Full URL to the installation media
-* **`package_checksum`** - sha256 checksum of the installation media
+* **`version`** - Installation version.  Will determine ISO download path if `package_url` is nil
+* `package_url` - Full URL to the installation media
+* `package_checksum` - sha256 checksum of the installation media
 * `install_sql` - Determines if SQL Express should be installed as part of adding the prerequisites.
 * `package_name` - FUTURE property
 * `share_path` - FUTURE property
 
 #### Examples:
 ```ruby
-# Install default Prerequisite tools but no SQL Express
+# Install default Prerequisite tools including SQL Express
 veeam_prerequisites 'Install Veeam Prerequisites' do
-  package_url 'http://myartifactory/Veeam/installationmedia.iso'
-  package_checksum 'sha256checksum'
+  version '9.0'
+  install_sql true
   action :install
 end
 ```
 
 ```ruby
-# Install default Prerequisite tools including SQL Express
+# Install default Prerequisite tools but no SQL Express using a custom url
 veeam_prerequisites 'Install Veeam Prerequisites' do
   package_url 'http://myartifactory/Veeam/installationmedia.iso'
   package_checksum 'sha256checksum'
-  install_sql true
   action :install
 end
 ```
@@ -172,8 +181,9 @@ Installs the Veeam Catalog Service
 
 #### Properties:
 _NOTE: properties in bold are required_
-* **`package_url`** - Full URL to the installation media
-* **`package_checksum`** - sha256 checksum of the installation media
+* **`version`** - Installation version.  Will determine ISO download path if `package_url` is nil
+* `package_url` - Full URL to the installation media
+* `package_checksum` - sha256 checksum of the installation media
 * `install_dir` - Sets the install directory for the Veeam Backup Catalog service
 * `vm_catalogpath` - Specifies a path to the catalog folder where index files must be stored
 * `vbrc_service_user` - Specifies a user account under which the Veeam Guest Catalog Service will run
@@ -187,6 +197,14 @@ _NOTE: properties in bold are required_
 ```ruby
 # A quick install of the catalog accepting all of the defaults
 veeam_catalog 'Install Veeam Backup Catalog' do
+  version '9.0'
+  action :install
+end
+```
+
+```ruby
+# A quick install of the catalog accepting all of the defaults using a custom url
+veeam_catalog 'Install Veeam Backup Catalog' do
   package_url 'http://myartifactory/Veeam/installationmedia.iso'
   package_checksum 'sha256checksum'
   action :install
@@ -196,8 +214,7 @@ end
 ```ruby
 # Install of the catalog with a custom the service user set to a domain service account
 veeam_catalog 'Install Veeam Backup Catalog' do
-  package_url 'http://myartifactory/Veeam/installationmedia.iso'
-  package_checksum 'sha256checksum'
+  version '9.0'
   vbrc_service_user 'mydomain\_srvcuser'
   vbrc_service_password 'myPassword1'
   action :install
@@ -212,8 +229,9 @@ Installs the Veeam Backup and Recovery Console
 
 #### Properties:
 _NOTE: properties in bold are required_
-* **`package_url`** - Full URL to the installation media
-* **`package_checksum`** - sha256 checksum of the installation media
+* **`version`** - Installation version.  Will determine ISO download path if `package_url` is nil
+* `package_url` - Full URL to the installation media
+* `package_checksum` - sha256 checksum of the installation media
 * **`accept_eula`** - Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA.  Default = false
 * `install_dir` - Sets the install directory for the Veeam Backup console service
 * `keep_media` - When set to true, the downloaded ISO will not be deleted.  This is helpful if you are installing multiple services on a single node.
@@ -223,6 +241,14 @@ _NOTE: properties in bold are required_
 #### Examples:
 ```ruby
 # A quick install of the console accepting all of the defaults
+veeam_console 'Install Veeam Backup console' do
+  version '9.0'
+  accept_eula true
+  action :install
+end
+```
+```ruby
+# A quick install of the console accepting all of the defaults using a custom url
 veeam_console 'Install Veeam Backup console' do
   package_url 'http://myartifactory/Veeam/installationmedia.iso'
   package_checksum 'sha256checksum'
@@ -234,8 +260,7 @@ end
 ```ruby
 # Install of the console with to a custom installation directory
 veeam_console 'Install Veeam Backup console' do
-  package_url 'http://myartifactory/Veeam/installationmedia.iso'
-  package_checksum 'sha256checksum'
+  version '9.0'
   install_dir 'C:\Veeam\Console'
   accept_eula true
   action :install
@@ -250,8 +275,9 @@ Installs the Veeam Backup and Recovery Service
 
 #### Properties:
 _NOTE: properties in bold are required_
-* **`package_url`** - Full URL to the installation media
-* **`package_checksum`** - sha256 checksum of the installation media
+* **`version`** - Installation version.  Will determine ISO download path if `package_url` is nil
+* `package_url` - Full URL to the installation media
+* `package_checksum` - sha256 checksum of the installation media
 * **`accept_eula`** - Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA.  Default = false
 * `install_dir` - Sets the install directory for the Veeam Backup and Recovery service
 * `evaluation` - Determines if the Veeam Backup and Recovery server should be installed using Evaluation Mode or if a license should be attached.
@@ -274,6 +300,15 @@ _NOTE: properties in bold are required_
 ```ruby
 # A quick install of the backup service accepting the EULA and all of the defaults
 veeam_server 'Install Veeam Backup Server' do
+  version '9.0'
+  accept_eula true
+  action :install
+end
+```
+
+```ruby
+# A quick install of the backup service accepting the EULA and all of the defaults using a custom url
+veeam_server 'Install Veeam Backup Server' do
   package_url 'http://myartifactory/Veeam/installationmedia.iso'
   package_checksum 'sha256checksum'
   accept_eula true
@@ -284,8 +319,7 @@ end
 ```ruby
 # Install of the Backup and Recovery service with a custom the service user set to a domain service account
 veeam_server 'Install Veeam Backup Catalog' do
-  package_url 'http://myartifactory/Veeam/installationmedia.iso'
-  package_checksum 'sha256checksum'
+  version '9.0'
   accept_eula true
   vbr_service_user 'mydomain\_srvcuser'
   vbr_service_password 'myPassword1'

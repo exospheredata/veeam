@@ -9,6 +9,7 @@ if node['platform_version'].to_f >= '6.1'.to_f # '6.1.' is the numeric platform_
   veeam_prerequisites 'Install Veeam Prerequisites' do
     package_url node['veeam']['installer']['package_url']
     package_checksum node['veeam']['installer']['package_checksum']
+    version node['veeam']['version']
     install_sql true
     action :install
   end
@@ -16,6 +17,7 @@ if node['platform_version'].to_f >= '6.1'.to_f # '6.1.' is the numeric platform_
   veeam_server 'Install Veeam Backup Server' do
     package_url node['veeam']['installer']['package_url']
     package_checksum node['veeam']['installer']['package_checksum']
+    version node['veeam']['version']
     accept_eula node['veeam']['server']['accept_eula']
     evaluation node['veeam']['server']['evaluation']
     install_dir node['veeam']['server']['install_dir']

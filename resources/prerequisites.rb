@@ -31,4 +31,5 @@ attribute :share_path, kind_of: String
 attribute :package_url, kind_of: String
 attribute :package_checksum, kind_of: String
 
+attribute :version, kind_of: String, required: true
 attribute :install_sql, kind_of: [TrueClass, FalseClass], default: false
