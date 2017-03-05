@@ -63,6 +63,16 @@ describe 'veeam::catalog' do
             node.override['veeam']['catalog']['vbrc_service_user'] = 'user1'
             expect { chef_run }.to raise_error(ArgumentError, /The VBRC service password must be set if a username is supplied/)
           end
+          it 'returns an Argument error when invalid Veeam version supplied' do
+            node.override['veeam']['version'] = '1.0'
+            expect { chef_run }.to raise_error(ArgumentError, /You must provide a package URL or choose a valid version/)
+          end
+          it 'returns an Argument error when invalid .NET Framework' do
+            allow_any_instance_of(Chef::DSL::RegistryHelper)
+              .to receive(:registry_get_values)
+              .and_return(nil)
+            expect { chef_run }.to raise_error(RuntimeError, /The Veeam Backup and Recovery Server requires that Microsoft .NET Framework 4.5.2 or higher/)
+          end
           it 'returns NO error when username and password supplied' do
             node.override['veeam']['catalog']['vbrc_service_user'] = 'user1'
             node.override['veeam']['catalog']['vbrc_service_password'] = 'password1'
