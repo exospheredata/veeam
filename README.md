@@ -79,7 +79,7 @@ Windows 2008R2 and lower is _not_ supported.
 
 ## Attributes
 ### Installation Media
-- `node['veeam']['version']` - String.  Base version of Veeam to install and used to download the appropriate ISO.  Supported versions are '9.0' and '9.5'  Default value is '9.0'.
+- `node['veeam']['version']` - String.  Base version of Veeam to install and used to download the appropriate ISO.  Supported versions are '9.0' and '9.5'  Default value is '9.5'.
 - `node['veeam']['installer']['package_url']` - String.  Custom URL for the Veeam Backup and Recovery ISO.  Default value is nil
 - `node['veeam']['installer']['package_checksum']` - String.  Sha256 hash of the remote ISO file.  Default value is nil
 - `node['veeam']['license_url']` - String.  URL for downloading the license filed used by this server.  If not provided, the default data_bag will be checked or the software will be installed in evaluation mode.  Default value is nil.
@@ -118,6 +118,7 @@ The attribute `node['veeam']['version']` is used to evaluate the ISO download pa
 | Version | ISO URL | SHA256 |
 | ------------- |-------------|-------------|
 | **9.0** | [VeeamBackup&Replication_9.0.0.902.iso](http://download2.veeam.com/VeeamBackup&Replication_9.0.0.902.iso) | 21f9d2c318911e668511990b8bbd2800141a7764cc97a8b78d4c2200c1225c88 |
+| **9.5** | [VeeamBackup&Replication_9.5.0.711.iso](http://download2.veeam.com/VeeamBackup&Replication_9.5.0.711.iso) | af3e3f6db9cb4a711256443894e6fb56da35d48c0b2c32d051960c52c5bc2f00 |
 
 ## Veeam Backup and Recovery License file
 The server must be licensed to unlock the full potential of the application.  The attribute `node['veeam']['server']['evaluation']` should be configured as `false`.  To license, choose one of the below options.
