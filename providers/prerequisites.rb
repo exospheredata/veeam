@@ -153,7 +153,6 @@ def install_dotnet(downloaded_file_name)
       windows_package 'Microsoft .NET Framework 4.5.2' do
         provider       Chef::Provider::Package::Windows
         source         "#{install_media_path}\\Redistr\\NDP452-KB2901907-x86-x64-AllOS-ENU.exe"
-        checksum       '6c2c589132e830a185c5f40f82042bee3022e721a216680bd9b3995ba86f3781'
         installer_type :custom
         options        '/norestart /passive'
         action         :install
@@ -166,14 +165,8 @@ end
 
 def install_sql_tools(downloaded_file_name)
   prerequisites = {
-    'Microsoft System CLR Types for SQL Server 2012 (x64)' => {
-      'installer' => 'SQLSysClrTypes.msi',
-      'checksum' => '674c396e9c9bf389dd21cec0780b3b4c808ff50c570fa927b07fa620db7d4537'
-    },
-    'Microsoft SQL Server 2012 Management Objects  (x64)' => {
-      'installer' => 'SharedManagementObjects.msi',
-      'checksum' => 'ed753d85b51e7eae381085cad3dcc0f29c0b72f014f8f8fba1ad4e0fe387ce0a'
-    }
+    'Microsoft System CLR Types for SQL Server 2012 (x64)' => 'SQLSysClrTypes.msi',
+    'Microsoft SQL Server 2012 Management Objects  (x64)' =>  'SharedManagementObjects.msi'
   }
   ruby_block 'Install the SQL Management Tools' do
     block do
@@ -184,8 +177,7 @@ def install_sql_tools(downloaded_file_name)
       prerequisites.each do |package_name, details|
         windows_package package_name do
           provider       Chef::Provider::Package::Windows
-          source         "#{prerequisites_root}#{details['installer']}"
-          checksum       details['checksum']
+          source         "#{prerequisites_root}#{details}"
           installer_type :msi
           action         :install
         end
@@ -218,7 +210,6 @@ def install_sql_express(downloaded_file_name)
       install_media_path = get_media_installer_location(downloaded_file_name)
       windows_package 'Microsoft SQL Server 2014 (64-bit)' do
         source "#{install_media_path}\\Redistr\\x64\\SQLEXPR_x64_ENU.exe"
-        checksum '7fae66c782d2fa3428530a074d091b51dcd17dee52b5a031c58505b01027d10f'
         timeout 1500
         installer_type :custom
         provider       Chef::Provider::Package::Windows
