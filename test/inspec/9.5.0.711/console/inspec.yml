@@ -1,0 +1,8 @@
+name: veeam_vbr_console
+title: Veeam Backup and Recovery Console
+maintainer: 'Exosphere Data, LLC'
+copyright: 'Exosphere Data, LLC'
+copyright_email: chef@exospheredata.com
+license: All Rights Reserved
+summary: An InSpec Compliance Profile for Veeam Backup and Recovery Console
+version: 0.1.0

@@ -40,19 +40,19 @@ suites:
       - recipe[veeam::catalog]
     verifier:
       inspec_tests:
-        - test/inspec/9.0.0.902/catalog
+        - test/inspec/9.5.0.711/catalog
     attributes:
       veeam:
-        version: '9.0'
+        version: '9.5'
   - name: console
     run_list:
       - recipe[veeam::console]
     verifier:
       inspec_tests:
-        - test/inspec/9.0.0.902/console
+        - test/inspec/9.5.0.711/console
     attributes:
       veeam:
-        version: '9.0'
+        version: '9.5'
         console:
           accept_eula: true
   - name: server
@@ -60,10 +60,10 @@ suites:
       - recipe[veeam::server]
     verifier:
       inspec_tests:
-        - test/inspec/9.0.0.902/server
+        - test/inspec/9.5.0.711/server
     attributes:
       veeam:
-        version: '9.0'
+        version: '9.5'
         server:
           accept_eula: true
   - name: server_with_console
@@ -71,11 +71,11 @@ suites:
       - recipe[veeam::server_with_console]
     verifier:
       inspec_tests:
-        - test/inspec/9.0.0.902/server
-        - test/inspec/9.0.0.902/console
+        - test/inspec/9.5.0.711/server
+        - test/inspec/9.5.0.711/console
     attributes:
       veeam:
-        version: '9.0'
+        version: '9.5'
         server:
           accept_eula: true
         console:
@@ -85,11 +85,11 @@ suites:
       - recipe[veeam::server_with_catalog]
     verifier:
       inspec_tests:
-        - test/inspec/9.0.0.902/catalog
-        - test/inspec/9.0.0.902/server
+        - test/inspec/9.5.0.711/catalog
+        - test/inspec/9.5.0.711/server
     attributes:
       veeam:
-        version: '9.0'
+        version: '9.5'
         server:
           accept_eula: true
   - name: standalone_complete
@@ -97,12 +97,12 @@ suites:
       - recipe[veeam::standalone_complete]
     verifier:
       inspec_tests:
-        - test/inspec/9.0.0.902/catalog
-        - test/inspec/9.0.0.902/server
-        - test/inspec/9.0.0.902/console
+        - test/inspec/9.5.0.711/catalog
+        - test/inspec/9.5.0.711/server
+        - test/inspec/9.5.0.711/console
     attributes:
       veeam:
-        version: '9.0'
+        version: '9.5'
         server:
           accept_eula: true
         console:
