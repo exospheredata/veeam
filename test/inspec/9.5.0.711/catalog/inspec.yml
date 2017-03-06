@@ -1,0 +1,8 @@
+name: backup_catalog
+title: Veeam Backup Catalog Server
+maintainer: 'Exosphere Data, LLC'
+copyright: 'Exosphere Data, LLC'
+copyright_email: chef@exospheredata.com
+license: All Rights Reserved
+summary: An InSpec Compliance Profile for Veeam Backup Catalog Server
+version: 0.1.0
