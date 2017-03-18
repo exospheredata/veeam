@@ -97,8 +97,14 @@ action :install do
 end
 
 def find_current_dotnet
+  installed_version = nil
   installed_version_reg_key = registry_get_values('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full')
-  installed_version_reg_key.nil? ? 0 : installed_version_reg_key[6][:data]
+  unless installed_version_reg_key.nil?
+    installed_version_reg_key.each do |key|
+      installed_version = key[:data] if key[:name] == 'Release'
+    end
+  end
+  installed_version.nil? ? 0 : installed_version
 end
 
 def validate_powershell_out(script)
