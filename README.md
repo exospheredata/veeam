@@ -1,9 +1,13 @@
+# Veeam:
+### _a cookbook to deploy Veeam Backup and Replication server_
+---
+This cookbook installs and configures Veeam Backup and Replication based on documented Veeam best practices.  The cookbook includes recipes to deploy all components of the solution as well as the optional Explorers.
+
+## Table of Contents
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+*generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Veeam:](#veeam)
-    - [_a cookbook to deploy Veeam Backup and Recovery server_](#_a-cookbook-to-deploy-veeam-backup-and-recovery-server_)
   - [Requirements](#requirements)
     - [Platforms](#platforms)
     - [Chef](#chef)
@@ -54,23 +58,18 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# Veeam:
-### _a cookbook to deploy Veeam Backup and Recovery server_
----
-Installs and configures Veeam Backup and Recovery based on documented Veeam best practices.
-
-
 ## Requirements
 
 ### Platforms
 - Windows Server 2012
 - Windows Server 2012R2
+- Windows Server 2016
 
 Windows 2008R2 and lower is _not_ supported.
 
 ### Chef
 
-- Chef 12.1+
+- Chef 12.5+
 
 ### Cookbooks
 
@@ -428,11 +427,17 @@ This repo includes a **Rakefile** for common tasks
 | **rake unit** | Run ChefSpec examples |
 | **rake integration** | Run all kitchen suites |
 | **rake integration:kitchen:catalog-windows-2012r2** | Run catalog-windows-2012r2 test instance |
+| **rake integration:kitchen:catalog-windows-2016** | Run catalog-windows-2016 test instance |
 | **rake integration:kitchen:console-windows-2012r2** | Run console-windows-2012r2 test instance |
+| **rake integration:kitchen:console-windows-2016** | Run console-windows-2016 test instance |
 | **rake integration:kitchen:server-windows-2012r2** | Run server-windows-2012r2 test instance |
+| **rake integration:kitchen:server-windows-2016** | Run server-windows-2016 test instance |
 | **rake integration:kitchen:server-with-catalog-windows-2012r2** | Run server-with-catalog-windows-2012r2 test instance |
+| **rake integration:kitchen:server-with-catalog-windows-2016** | Run server-with-catalog-windows-2016 test instance |
 | **rake integration:kitchen:server-with-console-windows-2012r2** | Run server-with-console-windows-2012r2 test instance |
+| **rake integration:kitchen:server-with-console-windows-2016** | Run server-with-console-windows-2016 test instance |
 | **rake integration:kitchen:standalone-complete-windows-2012r2** | Run standalone-complete-windows-2012r2 test instance |
+| **rake integration:kitchen:standalone-complete-windows-2016** | Run standalone-complete-windows-2016 test instance |
 | **rake maintainers:generate** | Generate MarkDown version of MAINTAINERS file |
 
 ### Chefspec and Test-Kitchen

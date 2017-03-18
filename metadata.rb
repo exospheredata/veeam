@@ -4,7 +4,7 @@ maintainer_email 'chef@exospheredata.com'
 license 'all_rights'
 description 'Installs/Configures Veeam Backup and Recovery'
 long_description 'Installs/Configures Veeam Backup and Recovery'
-version '0.6.0'
+version '0.7.0'
 
 supports 'windows'
 
