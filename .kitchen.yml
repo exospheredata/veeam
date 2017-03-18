@@ -33,6 +33,10 @@ platforms:
     transport:
       name: winrm
       elevated: true
+  - name: windows-2016
+    transport:
+      name: winrm
+      elevated: true
 
 suites:
   - name: catalog
