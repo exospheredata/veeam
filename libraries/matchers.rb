@@ -21,4 +21,8 @@ if defined?(ChefSpec)
     ChefSpec::Matchers::ResourceMatcher.new(:veeam_prerequisites, :install, resource_name)
   end
 
+  def install_veeam_explorer(resource_name)
+    ChefSpec::Matchers::ResourceMatcher.new(:veeam_explorer, :install, resource_name)
+  end
+
 end

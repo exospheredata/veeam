@@ -54,5 +54,24 @@ module Veeam
       }
       end
     end
+
+    def self.explorers_list(version)
+      case version.to_s # to_s to make sure someone didn't pass us an int
+      when '9.0' then {
+        'ActiveDirectory' => 'Veeam Explorer for Microsoft Active Directory',
+        'SQL' => 'Veeam Explorer for Microsoft SQL Server',
+        'Exchange' => 'Veeam Explorer for Microsoft Exchange',
+        'SharePoint' => 'Veeam Explorer for Microsoft SharePoint',
+        'Oracle' => 'Veeam Explorer for Oracle'
+      }
+      when '9.5' then {
+        'ActiveDirectory' => 'Veeam Explorer for Microsoft Active Directory',
+        'SQL' => 'Veeam Explorer for Microsoft SQL Server',
+        'Exchange' => 'Veeam Explorer for Microsoft Exchange',
+        'SharePoint' => 'Veeam Explorer for Microsoft SharePoint',
+        'Oracle' => 'Veeam Explorer for Oracle'
+      }
+      end
+    end
   end
 end
