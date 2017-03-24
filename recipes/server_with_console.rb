@@ -14,6 +14,16 @@ if node['platform_version'].to_f >= '6.1'.to_f # '6.1.' is the numeric platform_
     action :install
   end
 
+  veeam_console 'Install Veeam Backup Console' do
+    package_url node['veeam']['installer']['package_url']
+    package_checksum node['veeam']['installer']['package_checksum']
+    version node['veeam']['version']
+    accept_eula node['veeam']['console']['accept_eula']
+    install_dir node['veeam']['console']['install_dir']
+    keep_media true
+    action :install
+  end
+
   veeam_server 'Install Veeam Backup Server' do
     package_url node['veeam']['installer']['package_url']
     package_checksum node['veeam']['installer']['package_checksum']
@@ -28,13 +38,11 @@ if node['platform_version'].to_f >= '6.1'.to_f # '6.1.' is the numeric platform_
     action :install
   end
 
-  veeam_console 'Install Veeam Backup Console' do
+  veeam_explorer 'Install Veeam Backup Explorers' do
     package_url node['veeam']['installer']['package_url']
     package_checksum node['veeam']['installer']['package_checksum']
     version node['veeam']['version']
-    accept_eula node['veeam']['console']['accept_eula']
-    version node['veeam']['version']
-    install_dir node['veeam']['console']['install_dir']
+    explorers node['veeam']['server']['explorers']
     keep_media node['veeam']['console']['keep_media'] || node['veeam']['server']['keep_media']
     action :install
   end
