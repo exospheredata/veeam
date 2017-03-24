@@ -35,21 +35,6 @@ action :install do
   veeam = Veeam::Helper # Library of helper methods
   veeam.check_os_version(node)
 
-  # Check to see which of the pre-requisites have been installed
-  sql_system_clr = is_package_installed?('Microsoft System CLR Types for SQL Server 2012 (x64)')
-  sql_management_objects = is_package_installed?('Microsoft SQL Server 2012 Management Objects  (x64)')
-  sql_express = new_resource.install_sql ? is_package_installed?('Microsoft SQL Server 2012 (64-bit)') : true
-
-  return new_resource.updated_by_last_action(false) if sql_system_clr && sql_management_objects && sql_express && find_current_dotnet >= 379893
-
-  package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
-
-  # This will only create the directory if it does not exist which is likely the case if we have
-  # never performed a remote_file install.
-  directory package_save_dir do
-    action :create
-  end
-
   # Call the Veeam::Helper to find the correct URL based on the version of the Veeam Backup and Recovery edition passed
   # as an attribute.
   unless new_resource.package_url
@@ -59,6 +44,27 @@ action :install do
 
   # Halt this process now.  There is no URL for the package.
   raise ArgumentError, 'You must provide a package URL or choose a valid version' unless new_resource.package_url
+
+  # Determine if all of the Veeam pre-requisites are installed and if so, then skip the processing.
+  installed_prerequisites = []
+  prerequisites_list = veeam.prerequisites_list(new_resource.version)
+
+  prerequisites_list.each do |prerequisites|
+    installed_prerequisites.push(prerequisites) if is_package_installed?(prerequisites)
+  end
+
+  sql_express = new_resource.install_sql ? is_package_installed?('Microsoft SQL Server 2012 (64-bit)') : true
+
+  # Return up-to-date if all of the prerequisites are installed.
+  return new_resource.updated_by_last_action(false) if (prerequisites_list - installed_prerequisites).empty? && sql_express && find_current_dotnet >= 379893
+
+  package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
+
+  # This will only create the directory if it does not exist which is likely the case if we have
+  # never performed a remote_file install.
+  directory package_save_dir do
+    action :create
+  end
 
   # Since we are passing a URL, it is important that we handle the pull of the file as well as extraction.
   # We likely will receive an ISO but it is possible that we will have a ZIP or other compressed file type.
@@ -106,6 +112,7 @@ def download_installer(downloaded_file_name)
   remote_file downloaded_file_name do
     source new_resource.package_url
     checksum new_resource.package_checksum
+    provider Chef::Provider::RemoteFile
     use_conditional_get true # this should allow us to prevent duplicate downloads
     action :create
   end

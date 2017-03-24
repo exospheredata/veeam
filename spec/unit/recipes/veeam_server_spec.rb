@@ -80,7 +80,7 @@ describe 'veeam::server' do
             it 'raises an error when EULA not accepted' do
               node.normal['veeam']['server']['accept_eula'] = false
               # Need to set a valid .NET Framework version
-              expect { chef_run }.to raise_error(ArgumentError, /The Veeam Backup and Recovery EULA must be accepted/)
+              expect { chef_run }.to raise_error(ArgumentError, /The Veeam Backup and Replication EULA must be accepted/)
             end
             it 'returns an Argument error when invalid Veeam version supplied' do
               node.override['veeam']['version'] = '1.0'

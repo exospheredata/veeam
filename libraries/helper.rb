@@ -29,9 +29,9 @@ module Veeam
 
     def self.check_os_version(node)
       # '6.1.' is the numeric platform_version for Windows 2008R2.  If the node OS version is below that value, we must abort.
-      raise ArgumentError, 'Veeam Backup and recovery management requires a Windows 2008R2 or higher host!' if node['platform_version'].to_f < '6.1'.to_f
+      raise ArgumentError, 'Veeam Backup and Replication management requires a Windows 2008R2 or higher host!' if node['platform_version'].to_f < '6.1'.to_f
       # If the kernel is not 64bit then raise an error, as we cannot proceed.
-      raise ArgumentError, 'Veeam Backup and Recovery requires an x86_64 host and cannot be installed on this machine' unless node['kernel']['machine'] =~ /x86_64/
+      raise ArgumentError, 'Veeam Backup and Replication requires an x86_64 host and cannot be installed on this machine' unless node['kernel']['machine'] =~ /x86_64/
     end
 
     def self.find_package_url(version)
@@ -52,6 +52,21 @@ module Veeam
         'package_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.711.iso',
         'package_checksum' => 'af3e3f6db9cb4a711256443894e6fb56da35d48c0b2c32d051960c52c5bc2f00'
       }
+      end
+    end
+
+    def self.prerequisites_list(version)
+      case version.to_s # to_s to make sure someone didn't pass us an int
+      when '9.0' then [
+        'Microsoft System CLR Types for SQL Server 2012 (x64)',
+        'Microsoft SQL Server 2012 Management Objects  (x64)',
+        'Microsoft SQL Server 2012 (64-bit)'
+      ]
+      when '9.5' then [
+        'Microsoft System CLR Types for SQL Server 2014',
+        'Microsoft SQL Server 2014 Management Objects  (x64)',
+        'Microsoft SQL Server 2012 (64-bit)'
+      ]
       end
     end
 
