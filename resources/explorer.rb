@@ -29,9 +29,6 @@ property :share_path, String
 property :package_url, String
 property :package_checksum, String
 
-property :accept_eula, [TrueClass, FalseClass], default: false, required: true
-property :install_dir, String
-
 property :version, String, required: true
 property :keep_media, [TrueClass, FalseClass], default: false
 
@@ -44,8 +41,19 @@ action :install do
   veeam = Veeam::Helper # Library of helper methods
   veeam.check_os_version(node)
 
-  # raise 'The Veeam Backup and Replication Server must be installed before you can install Veeam Explorers' unless is_package_installed?('Veeam Backup & Replication Server')
-  # raise 'The Veeam Backup and Replication Console must be installed before you can install Veeam Explorers' unless is_package_installed?('Veeam Backup & Replication Console')
+  raise 'The Veeam Backup and Replication Server must be installed before you can install Veeam Explorers' unless is_package_installed?('Veeam Backup & Replication Server')
+  raise 'The Veeam Backup and Replication Console must be installed before you can install Veeam Explorers' unless is_package_installed?('Veeam Backup & Replication Console')
+
+  # Call the Veeam::Helper to find the correct URL based on the version of the Veeam Backup and Replication edition passed
+  # as an attribute.
+  unless new_resource.package_url
+    new_resource.package_url = veeam.find_package_url(new_resource.version)
+    new_resource.package_checksum = veeam.find_package_checksum(new_resource.version)
+    Chef::Log.info(new_resource.package_url)
+  end
+
+  # Halt this process now.  There is no URL for the package.
+  raise ArgumentError, 'You must provide a package URL or choose a valid version' unless new_resource.package_url
 
   # Determine if all of the Veeam Explorers are installed and if so, then skip the processing.
   installed_explorers = []
@@ -65,17 +73,6 @@ action :install do
   directory package_save_dir do
     action :create
   end
-
-  # Call the Veeam::Helper to find the correct URL based on the version of the Veeam Backup and Replication edition passed
-  # as an attribute.
-  unless new_resource.package_url
-    new_resource.package_url = veeam.find_package_url(new_resource.version)
-    new_resource.package_checksum = veeam.find_package_checksum(new_resource.version)
-    Chef::Log.info(new_resource.package_url)
-  end
-
-  # Halt this process now.  There is no URL for the package.
-  raise ArgumentError, 'You must provide a package URL or choose a valid version' unless new_resource.package_url
 
   # Since we are passing a URL, it is important that we handle the pull of the file as well as extraction.
   # We likely will receive an ISO but it is possible that we will have a ZIP or other compressed file type.

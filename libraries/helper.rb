@@ -57,16 +57,16 @@ module Veeam
 
     def self.prerequisites_list(version)
       case version.to_s # to_s to make sure someone didn't pass us an int
-      when '9.0' then [
-        'Microsoft System CLR Types for SQL Server 2012 (x64)',
-        'Microsoft SQL Server 2012 Management Objects  (x64)',
-        'Microsoft SQL Server 2012 (64-bit)'
-      ]
-      when '9.5' then [
-        'Microsoft System CLR Types for SQL Server 2014',
-        'Microsoft SQL Server 2014 Management Objects  (x64)',
-        'Microsoft SQL Server 2012 (64-bit)'
-      ]
+      when '9.0' then {
+        '0' => { 'Microsoft System CLR Types for SQL Server 2012 (x64)' => 'SQLSysClrTypes.msi' },
+        '1' => { 'Microsoft SQL Server 2012 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
+        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+      }
+      when '9.5' then {
+        '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
+        '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
+        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+      }
       end
     end
 

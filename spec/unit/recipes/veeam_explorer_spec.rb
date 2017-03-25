@@ -16,19 +16,21 @@ describe 'veeam::server_with_console' do
   context 'Test valid installation' do
     platforms = {
       'windows' => {
-        'versions' => %w(2008R2) #  2012 2012R2)
+        'versions' => %w(2008R2 2012 2012R2)
       }
     }
     platforms.each do |platform, components|
       components['versions'].each do |version|
         context "On #{platform} #{version}" do
           context 'successfully' do
-            let(:shellout) do
-            end
             before do
               Fauxhai.mock(platform: platform, version: version)
               allow(Chef::Config).to receive(:file_cache_path)
                 .and_return('...')
+              # Since the Windows::Helper Module is loaded into the Provider, we don't need to stub the Windows::Helper but instead,
+              # we can just stub the method in the provider.  This is much cleaner and easier to manage.
+              allow_any_instance_of(Chef::Provider).to receive(:is_package_installed?).with('Veeam Backup & Replication Server').and_return(true)
+              allow_any_instance_of(Chef::Provider).to receive(:is_package_installed?).with('Veeam Backup & Replication Console').and_return(true)
               # Need to set a valid .NET Framework version
               allow_any_instance_of(Chef::DSL::RegistryHelper)
                 .to receive(:registry_get_values)
@@ -51,21 +53,27 @@ describe 'veeam::server_with_console' do
             let(:downloaded_file_name) { win_friendly_path(::File.join(package_save_dir, 'VeeamBackup&Replication_9.5.0.711.iso')) }
 
             it 'converges successfully' do
+              expect { chef_run }.not_to raise_error
               expect(chef_run).to install_veeam_prerequisites('Install Veeam Prerequisites')
               expect(chef_run).to install_veeam_console('Install Veeam Backup Console')
               expect(chef_run).to install_veeam_server('Install Veeam Backup Server')
               expect(chef_run).to install_veeam_explorer('Install Veeam Backup Explorers')
-              expect { chef_run }.not_to raise_error
             end
             it 'Step into LWRP - veeam_explorer' do
+              expect { chef_run }.not_to raise_error
               expect(chef_run).to create_directory(package_save_dir)
               expect(chef_run).to create_remote_file(downloaded_file_name)
               expect(chef_run).to run_powershell_script('Load Veeam media')
               expect(chef_run).to run_ruby_block('Install Veeam Explorers')
               expect(chef_run).to delete_file(downloaded_file_name)
             end
-            it 'should install explorers if defined' do
-              expect { chef_run }.not_to raise_error
+            it 'should RAISE an error if Veeam Server not installed' do
+              allow_any_instance_of(Chef::Provider).to receive(:is_package_installed?).with('Veeam Backup & Replication Server').and_return(false)
+              expect { chef_run }.to raise_error(RuntimeError, /The Veeam Backup and Replication Server must be installed before you can install Veeam Explorers/)
+            end
+            it 'should RAISE an error if Veeam Console not installed' do
+              allow_any_instance_of(Chef::Provider).to receive(:is_package_installed?).with('Veeam Backup & Replication Console').and_return(false)
+              expect { chef_run }.to raise_error(RuntimeError, /The Veeam Backup and Replication Console must be installed before you can install Veeam Explorers/)
             end
             it 'should unmount the media' do
               stub_command(/Get-DiskImage/).and_return(true)
@@ -80,27 +88,27 @@ describe 'veeam::server_with_console' do
       end
     end
   end
-  # context 'Test installation' do
-  #   platforms = {
-  #     'windows' => {
-  #       'versions' => %w(2003R2) # Unable to test plain Win2008 since Fauxhai doesn't have a template for 2008
-  #     }
-  #   }
-  #   platforms.each do |platform, components|
-  #     components['versions'].each do |version|
-  #       context "On #{platform} #{version}" do
-  #         before do
-  #           Fauxhai.mock(platform: platform, version: version)
-  #         end
+  context 'Test installation' do
+    platforms = {
+      'windows' => {
+        'versions' => %w(2003R2) # Unable to test plain Win2008 since Fauxhai doesn't have a template for 2008
+      }
+    }
+    platforms.each do |platform, components|
+      components['versions'].each do |version|
+        context "On #{platform} #{version}" do
+          before do
+            Fauxhai.mock(platform: platform, version: version)
+          end
 
-  #         let(:chef_run) do
-  #           ChefSpec::SoloRunner.new(platform: platform, version: version).converge(described_recipe)
-  #         end
-  #         it 'raises an exception' do
-  #           expect { chef_run }.to raise_error('This recipe requires a Windows 2008R2 or higher host!')
-  #         end
-  #       end
-  #     end
-  #   end
-  # end
+          let(:chef_run) do
+            ChefSpec::SoloRunner.new(platform: platform, version: version).converge(described_recipe)
+          end
+          it 'raises an exception' do
+            expect { chef_run }.to raise_error('This recipe requires a Windows 2008R2 or higher host!')
+          end
+        end
+      end
+    end
+  end
 end
