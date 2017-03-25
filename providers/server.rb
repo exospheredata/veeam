@@ -39,9 +39,9 @@ action :install do
   return new_resource.updated_by_last_action(false) if is_package_installed?('Veeam Backup & Replication Server')
 
   # We need to verify that .NET Framework 4.5.2 or higher has been installed on the machine
-  raise 'The Veeam Backup and Recovery Server requires that Microsoft .NET Framework 4.5.2 or higher be installed.  Please install the Veeam pre-requisites' if find_current_dotnet < 379893
+  raise 'The Veeam Backup and Replication Server requires that Microsoft .NET Framework 4.5.2 or higher be installed.  Please install the Veeam pre-requisites' if find_current_dotnet < 379893
 
-  raise ArgumentError, 'The Veeam Backup and Recovery EULA must be accepted.  Please set the node attribute [\'veeam\'][\'server\'][\'accept_eula\'] to \'true\' ' unless new_resource.accept_eula == true
+  raise ArgumentError, 'The Veeam Backup and Replication EULA must be accepted.  Please set the node attribute [\'veeam\'][\'server\'][\'accept_eula\'] to \'true\' ' unless new_resource.accept_eula == true
   raise ArgumentError, 'The VBR service password must be set if a username is supplied' if new_resource.vbr_service_user && new_resource.vbr_service_password.nil?
 
   package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
@@ -52,7 +52,7 @@ action :install do
     action :create
   end
 
-  # Call the Veeam::Helper to find the correct URL based on the version of the Veeam Backup and Recovery edition passed
+  # Call the Veeam::Helper to find the correct URL based on the version of the Veeam Backup and Replication edition passed
   # as an attribute.
   unless new_resource.package_url
     new_resource.package_url = veeam.find_package_url(new_resource.version)
@@ -67,7 +67,7 @@ action :install do
   # We likely will receive an ISO but it is possible that we will have a ZIP or other compressed file type.
   # This is easy to handle as long as we add a method to check for the file base type.
 
-  Chef::Log.debug('Downloading Veeam Backup and Recovery software via URL')
+  Chef::Log.debug('Downloading Veeam Backup and Replication software via URL')
   package_name = new_resource.package_url.split('/').last
   installer_file_name = win_friendly_path(::File.join(package_save_dir, package_name))
   download_installer(installer_file_name)
@@ -76,7 +76,7 @@ action :install do
 
   ruby_block 'Install the Backup server application' do
     block do
-      Chef::Log.debug 'Installing Veeam Backup and Recovery server'
+      Chef::Log.debug 'Installing Veeam Backup and Replication server'
       install_media_path = get_media_installer_location(installer_file_name)
       perform_server_install(install_media_path)
     end
@@ -112,9 +112,9 @@ end
 def validate_powershell_out(script)
   # This seemed like the DRYest way to handle the output handling from PowerShell.
   cmd = powershell_out(script)
-  # Check powershell output
+  # Only return the output if there were no errors.
+  return cmd.stdout.chomp if cmd.stderr == '' || cmd.stderr.nil?
   raise cmd.inspect if cmd.stderr != ''
-  cmd.stdout.chop
 end
 
 def download_installer(downloaded_file_name)
