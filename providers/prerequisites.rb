@@ -46,17 +46,20 @@ action :install do
   raise ArgumentError, 'You must provide a package URL or choose a valid version' unless new_resource.package_url
 
   # Determine if all of the Veeam pre-requisites are installed and if so, then skip the processing.
+  prerequisites_list = []
   installed_prerequisites = []
-  prerequisites_list = veeam.prerequisites_list(new_resource.version)
+  prerequisites_hash = veeam.prerequisites_list(new_resource.version)
 
-  prerequisites_list.each do |prerequisites|
-    installed_prerequisites.push(prerequisites) if is_package_installed?(prerequisites)
+  prerequisites_hash.each do |item, prerequisites|
+    package_name = prerequisites.map { |k, _v| k }.join(',')
+    unless item == 'SQL' && new_resource.install_sql == false
+      prerequisites_list.push(package_name)
+      installed_prerequisites.push(package_name) if is_package_installed?(package_name)
+    end
   end
 
-  sql_express = new_resource.install_sql ? is_package_installed?('Microsoft SQL Server 2012 (64-bit)') : true
-
   # Return up-to-date if all of the prerequisites are installed.
-  return new_resource.updated_by_last_action(false) if (prerequisites_list - installed_prerequisites).empty? && sql_express && find_current_dotnet >= 379893
+  return new_resource.updated_by_last_action(false) if (prerequisites_list - installed_prerequisites).empty? && find_current_dotnet >= 379893
 
   package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
@@ -177,10 +180,13 @@ def install_dotnet(downloaded_file_name)
 end
 
 def install_sql_tools(downloaded_file_name)
-  prerequisites = {
-    'Microsoft System CLR Types for SQL Server 2012 (x64)' => 'SQLSysClrTypes.msi',
-    'Microsoft SQL Server 2012 Management Objects  (x64)' =>  'SharedManagementObjects.msi'
-  }
+  prerequisites_hash = Veeam::Helper.prerequisites_list(new_resource.version)
+
+  prerequisites = {}
+  prerequisites_hash.each do |item, prereq|
+    prereq.map { |k, v| prerequisites[k] = v unless item == 'SQL' }
+  end
+
   ruby_block 'Install the SQL Management Tools' do
     block do
       install_media_path = get_media_installer_location(downloaded_file_name)

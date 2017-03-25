@@ -56,6 +56,14 @@ describe 'veeam::server' do
             stub_command(/Get-DiskImage/).and_return(true)
             expect(chef_run).to run_powershell_script('Dismount Veeam media')
           end
+          it 'should skip processing if everything is installed' do
+            allow_any_instance_of(Chef::Provider).to receive(:is_package_installed?)
+              .and_return(true)
+            allow_any_instance_of(Chef::DSL::RegistryHelper)
+              .to receive(:registry_get_values)
+              .and_return([{}, {}, {}, {}, {}, {}, { name: 'Release', data: 379893 }])
+            expect(chef_run).not_to create_directory(package_save_dir)
+          end
           it 'returns an Argument error when invalid Veeam version supplied' do
             node.override['veeam']['version'] = '1.0'
             expect { chef_run }.to raise_error(ArgumentError, /You must provide a package URL or choose a valid version/)

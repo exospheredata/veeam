@@ -8,53 +8,63 @@ This cookbook installs and configures Veeam Backup and Replication based on docu
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-  - [Requirements](#requirements)
-    - [Platforms](#platforms)
-    - [Chef](#chef)
-    - [Cookbooks](#cookbooks)
-  - [Attributes](#attributes)
-    - [Installation Media](#installation-media)
-    - [Catalog](#catalog)
-    - [Server](#server)
-  - [Veeam Backup and Recovery ISO](#veeam-backup-and-recovery-iso)
-  - [Veeam Backup and Recovery License file](#veeam-backup-and-recovery-license-file)
-  - [Resource/Provider](#resourceprovider)
-    - [Veeam_Prerequisites](#veeam_prerequisites)
-      - [Actions:](#actions)
-      - [Properties:](#properties)
-      - [Examples:](#examples)
-    - [Veeam_Catalog](#veeam_catalog)
-      - [Actions:](#actions-1)
-      - [Properties:](#properties-1)
-      - [Examples:](#examples-1)
-    - [Veeam_Console](#veeam_console)
-      - [Actions:](#actions-2)
-      - [Properties:](#properties-2)
-      - [Examples:](#examples-2)
-    - [Veeam_Server](#veeam_server)
-      - [Actions:](#actions-3)
-      - [Properties:](#properties-3)
-      - [Examples:](#examples-3)
-  - [Usage](#usage)
-    - [default](#default)
-    - [catalog recipe](#catalog-recipe)
-    - [server recipe](#server-recipe)
-    - [console recipe](#console-recipe)
-    - [server_with_catalog recipe](#server_with_catalog-recipe)
-    - [server_with_console recipe](#server_with_console-recipe)
-    - [standalone_complete recipe](#standalone_complete-recipe)
-  - [Upload to Chef Server](#upload-to-chef-server)
-  - [Matchers/Helpers](#matchershelpers)
-    - [Matchers](#matchers)
-    - [Windows_Helper](#windows_helper)
-  - [Cookbook Testing](#cookbook-testing)
-    - [Before you begin](#before-you-begin)
-    - [Data_bags for Test-Kitchen](#data_bags-for-test-kitchen)
-    - [Rakefile and Tasks](#rakefile-and-tasks)
-    - [Chefspec and Test-Kitchen](#chefspec-and-test-kitchen)
-    - [Compliance Profile](#compliance-profile)
-  - [Contribute](#contribute)
-  - [License and Author](#license-and-author)
+- [Requirements](#requirements)
+  - [Platforms](#platforms)
+  - [Chef](#chef)
+  - [Cookbooks](#cookbooks)
+- [Attributes](#attributes)
+  - [Installation Media](#installation-media)
+  - [Catalog](#catalog)
+  - [Server](#server)
+- [Veeam Backup and Replication ISO](#veeam-backup-and-replication-iso)
+- [Veeam Backup and Replication License file](#veeam-backup-and-replication-license-file)
+- [Resource/Provider](#resourceprovider)
+  - [Veeam_Prerequisites](#veeam_prerequisites)
+    - [Actions:](#actions)
+    - [Properties:](#properties)
+    - [Examples:](#examples)
+  - [Veeam_Catalog](#veeam_catalog)
+    - [Actions:](#actions-1)
+    - [Properties:](#properties-1)
+    - [Examples:](#examples-1)
+  - [Veeam_Console](#veeam_console)
+    - [Actions:](#actions-2)
+    - [Properties:](#properties-2)
+    - [Examples:](#examples-2)
+  - [Veeam_Server](#veeam_server)
+    - [Actions:](#actions-3)
+    - [Properties:](#properties-3)
+    - [Examples:](#examples-3)
+  - [Veeam_Explorer](#veeam_explorer)
+    - [Actions:](#actions-4)
+    - [Properties:](#properties-4)
+    - [Examples:](#examples-4)
+- [Usage](#usage)
+  - [default](#default)
+  - [catalog recipe](#catalog-recipe)
+  - [server recipe](#server-recipe)
+  - [console recipe](#console-recipe)
+  - [server_with_catalog recipe](#server_with_catalog-recipe)
+  - [server_with_console recipe](#server_with_console-recipe)
+  - [standalone_complete recipe](#standalone_complete-recipe)
+- [Upload to Chef Server](#upload-to-chef-server)
+- [Matchers/Helpers](#matchershelpers)
+  - [Matchers](#matchers)
+  - [Veeam::Helper](#veeamhelper)
+    - [check_os_version](#check_os_version)
+    - [find_package_url(version)](#find_package_urlversion)
+    - [find_package_checksum(version)](#find_package_checksumversion)
+    - [prerequisites_list](#prerequisites_list)
+    - [explorers_list](#explorers_list)
+  - [Windows_Helper](#windows_helper)
+- [Cookbook Testing](#cookbook-testing)
+  - [Before you begin](#before-you-begin)
+  - [Data_bags for Test-Kitchen](#data_bags-for-test-kitchen)
+  - [Rakefile and Tasks](#rakefile-and-tasks)
+  - [Chefspec and Test-Kitchen](#chefspec-and-test-kitchen)
+  - [Compliance Profile](#compliance-profile)
+- [Contribute](#contribute)
+- [License and Author](#license-and-author)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -73,13 +83,13 @@ Windows 2008R2 and lower is _not_ supported.
 
 ### Cookbooks
 
-- windows = 2.0.2
+- windows
 
 
 ## Attributes
 ### Installation Media
 - `node['veeam']['version']` - String.  Base version of Veeam to install and used to download the appropriate ISO.  Supported versions are '9.0' and '9.5'  Default value is '9.5'.
-- `node['veeam']['installer']['package_url']` - String.  Custom URL for the Veeam Backup and Recovery ISO.  Default value is nil
+- `node['veeam']['installer']['package_url']` - String.  Custom URL for the Veeam Backup and Replication ISO.  Default value is nil
 - `node['veeam']['installer']['package_checksum']` - String.  Sha256 hash of the remote ISO file.  Default value is nil
 - `node['veeam']['license_url']` - String.  URL for downloading the license filed used by this server.  If not provided, the default data_bag will be checked or the software will be installed in evaluation mode.  Default value is nil.
 
@@ -94,7 +104,7 @@ Windows 2008R2 and lower is _not_ supported.
 ### Server
 - `node['veeam']['server']['accept_eula']` - TrueFalse.  Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA.  Default = false
 - `node['veeam']['server']['install_dir']` - String. Installs the component to the specified location. By default, Veeam Backup & Replication uses the Backup Catalog subfolder in the `C:\Program Files\Veeam\Backup and Replication\` folder.
-- `node['veeam']['server']['evaluation']` - Determines if the Veeam Backup and Recovery server should be installed using Evaluation Mode or if a license should be attached.  Default value is true and the server will be installed with no license.
+- `node['veeam']['server']['evaluation']` - Determines if the Veeam Backup and Replication server should be installed using Evaluation Mode or if a license should be attached.  Default value is true and the server will be installed with no license.
 - `node['veeam']['server']['vbr_check_updates']` - TrueFalse. Specifies if you want Veeam Backup & Replication to automatically check for new product patches and versions.
 - `node['veeam']['server']['vbr_service_user']` - String. Specifies the account under which the Veeam Backup Service will run. The account must have full control NTFS permissions on the `VBRCatalog` folder where index files are stored and the Database owner rights for the configuration database on the Microsoft SQL Server where the configuration database is deployed.  If you do not specify this parameter, the Veeam Guest Catalog Service will run under the Local System account.  NOTE: The account must be in Domain\User or Computer\User format.  If using a local account, then use either the `hostname\username` or use `.\username`
 - `node['veeam']['server']['vbr_service_password']` - String. Specifies a password for the account under which the Veeam Guest Backup Service will run.  This parameter must be used if you have specified the `VBR_SERVICE_USER` parameter.
@@ -110,8 +120,9 @@ Windows 2008R2 and lower is _not_ supported.
 - `node['veeam']['server']['keep_media']` - TrueFalse.  Determines if the recipe should remove the media at the end of the installation.  Default is false
 
 - `node['sql_server']['server_sa_password']` - String.  Configures the SQL Admin password for the SQLExpress instance.  Default value is 'Veeam1234'
+- `node['veeam']['server']['explorers']` - Array. List of Veeam Explorers to install. Default values are 'ActiveDirectory','Exchange','SQL','Oracle','SharePoint'
 
-## Veeam Backup and Recovery ISO
+## Veeam Backup and Replication ISO
 The attribute `node['veeam']['version']` is used to evaluate the ISO download path and checksum for the installation media.  When provided, the version selected will be downloaded based on the has found in `libraries/helper.rb`.  This media can be overridden by providing the appropriate installation media attributes - `node['veeam']['installer']['package_url']` and `node['veeam']['installer']['package_checksum']`.  By default, these attributes are `nil` and the system will download the ISO every time.
 
 | Version | ISO URL | SHA256 |
@@ -119,10 +130,10 @@ The attribute `node['veeam']['version']` is used to evaluate the ISO download pa
 | **9.0** | [VeeamBackup&Replication_9.0.0.902.iso](http://download2.veeam.com/VeeamBackup&Replication_9.0.0.902.iso) | 21f9d2c318911e668511990b8bbd2800141a7764cc97a8b78d4c2200c1225c88 |
 | **9.5** | [VeeamBackup&Replication_9.5.0.711.iso](http://download2.veeam.com/VeeamBackup&Replication_9.5.0.711.iso) | af3e3f6db9cb4a711256443894e6fb56da35d48c0b2c32d051960c52c5bc2f00 |
 
-## Veeam Backup and Recovery License file
+## Veeam Backup and Replication License file
 The server must be licensed to unlock the full potential of the application.  The attribute `node['veeam']['server']['evaluation']` should be configured as `false`.  To license, choose one of the below options.
 
-1. Save the license file on a web server to which the Veeam Backup and Recovery server can access.  Set the `node['veeam']['license_url']` attribute to include the full path to the license file.
+1. Save the license file on a web server to which the Veeam Backup and Replication server can access.  Set the `node['veeam']['license_url']` attribute to include the full path to the license file.
 2. Encode the license file as a Base64 string and create a new DataBag `veeam` with an Item `license`.  Add the key license with the value as the Base64 encoded string.
 
 ```json
@@ -139,8 +150,8 @@ The server must be licensed to unlock the full potential of the application.  Th
 Installs the required resoures to support Veeam applications.  Included in this resource:
 - .NET Framework 4.5.2
 - Microsoft SQL Server System CLR Types (x64)
-- Microsoft SQL Server 2012 Management Objects (x64)
-- Microsoft SQL Server 2014 (64-bit) [optional]
+- Microsoft SQL Server Management Objects (x64)
+- Microsoft SQL Server (64-bit) [optional]
 
 #### Actions:
 * `:install` - Installs all of the prerequisites and optionally installs SQL Express
@@ -222,10 +233,10 @@ end
 ```
 
 ### Veeam_Console
-Installs the Veeam Backup and Recovery Console
+Installs the Veeam Backup and Replication Console
 
 #### Actions:
-* `:install` - Installs the Veeam Backup and Recovery Console service
+* `:install` - Installs the Veeam Backup and Replication Console service
 
 #### Properties:
 _NOTE: properties in bold are required_
@@ -268,10 +279,10 @@ end
 ```
 
 ### Veeam_Server
-Installs the Veeam Backup and Recovery Service
+Installs the Veeam Backup and Replication Service
 
 #### Actions:
-* `:install` - Installs the Veeam Backup and Recovery service
+* `:install` - Installs the Veeam Backup and Replication service
 
 #### Properties:
 _NOTE: properties in bold are required_
@@ -279,8 +290,8 @@ _NOTE: properties in bold are required_
 * `package_url` - Full URL to the installation media
 * `package_checksum` - sha256 checksum of the installation media
 * **`accept_eula`** - Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA.  Default = false
-* `install_dir` - Sets the install directory for the Veeam Backup and Recovery service
-* `evaluation` - Determines if the Veeam Backup and Recovery server should be installed using Evaluation Mode or if a license should be attached.
+* `install_dir` - Sets the install directory for the Veeam Backup and Replication service
+* `evaluation` - Determines if the Veeam Backup and Replication server should be installed using Evaluation Mode or if a license should be attached.
 * `vbr_check_updates` - Specifies if you want Veeam Backup & Replication to automatically check for new product patches and versions.
 * `vbr_service_user` - Specifies a user account under which the Veeam Guest Backup Service will run
 * `vbr_service_password` - Specifies a password for the account under which the Veeam Guest Backup Service will run
@@ -317,12 +328,47 @@ end
 ```
 
 ```ruby
-# Install of the Backup and Recovery service with a custom the service user set to a domain service account
+# Install of the Backup and Replication service with a custom the service user set to a domain service account
 veeam_server 'Install Veeam Backup Catalog' do
   version '9.0'
   accept_eula true
   vbr_service_user 'mydomain\_srvcuser'
   vbr_service_password 'myPassword1'
+  action :install
+end
+```
+
+### Veeam_Explorer
+Installs the Veeam Backup and Replication Explorers
+
+#### Actions:
+* `:install` - Installs the Veeam Backup and Replication Console service
+
+#### Properties:
+_NOTE: properties in bold are required_
+* **`version`** - Installation version.  Will determine ISO download path if `package_url` is nil
+* `package_url` - Full URL to the installation media
+* `package_checksum` - sha256 checksum of the installation media
+* `keep_media` - When set to true, the downloaded ISO will not be deleted.  This is helpful if you are installing multiple services on a single node.
+* **`explorers`** - List of Veeam Backup Explorers to be installed.
+* `package_name` - FUTURE property
+* `share_path` - FUTURE property
+
+#### Examples:
+```ruby
+# A quick install of the Active Directory Explorer accepting all of the defaults
+veeam_explorer 'Veeam Explorer for Microsoft Active Directory' do
+  version '9.0'
+  explorers 'ActiveDirectory'
+  action :install
+end
+```
+```ruby
+# A quick install of the SQL Server Explorer accepting all of the defaults using a custom url
+veeam_explorer 'Veeam Explorer for Microsoft SQL Server' do
+  package_url 'http://myartifactory/Veeam/installationmedia.iso'
+  package_checksum 'sha256checksum'
+  explorers 'SQL'
   action :install
 end
 ```
@@ -334,27 +380,27 @@ This is an empty recipe and should _not_ be used
 
 ### catalog recipe
 
-Installs and configures Veeam Backup and Recovery Catalog service using the default configuration including pre-requisites
+Installs and configures Veeam Backup and Replication Catalog service using the default configuration including pre-requisites
 
 ### server recipe
 
-Installs and configures Veeam Backup and Recovery Server service using the default configuration including pre-requisites and SQLExpress
+Installs and configures Veeam Backup and Replication Server service using the default configuration including pre-requisites and SQLExpress
 
 ### console recipe
 
-Installs and configures Veeam Backup and Recovery Console using the default configuration including pre-requisites
+Installs and configures Veeam Backup and Replication Console using the default configuration including pre-requisites
 
 ### server_with_catalog recipe
 
-Installs and configures Veeam Backup and Recovery Server & Catalog using the default configuration including pre-requisites and SQLExpress
+Installs and configures Veeam Backup and Replication Server & Catalog using the default configuration including pre-requisites and SQLExpress
 
 ### server_with_console recipe
 
-Installs and configures Veeam Backup and Recovery Server & Console using the default configuration including pre-requisites and SQLExpress
+Installs and configures Veeam Backup and Replication Server & Console using the default configuration including pre-requisites and SQLExpress.  Also installs all of the Veeam Backup Explorers
 
 ### standalone_complete recipe
 
-Installs and configures Veeam Backup and Recovery Server, Console & the Catalog service using the default configuration including pre-requisites and SQLExpress
+Installs and configures Veeam Backup and Replication Server, Console & the Catalog service using the default configuration including pre-requisites and SQLExpress.  Also installs all of the Veeam Backup Explorers
 
 ## Upload to Chef Server
 This cookbook should be included in each organization of your CHEF environment.  When importing, leverage Berkshelf:
@@ -375,7 +421,50 @@ _Note: Matchers should always be created in `libraries/matchers.rb` and used for
 * `install_veeam_console(resource_name)`
 * `install_veeam_server(resource_name)`
 * `install_veeam_prerequisites(resource_name)`
+* `install_veeam_explorer(resource_name)`
 
+### Veeam::Helper
+_Note:  A helper to handle common and repeated functions_
+
+#### check_os_version
+Determines if the current node meets the OS type and requirements. If False, then raise an Argument Errors depending if the node['platform_version'] or node['kernel']['machine'] are wrong.
+```
+# usage in a custom_resource
+veeam = Veeam::Helper
+veeam.check_os_version(node)
+```
+
+#### find_package_url(version)
+Uses the supplied version identifier to return the stored URL location of the installation media.  This method calls the package_list method to identify the correct information
+```
+# usage in a custom_resource
+veeam = Veeam::Helper
+package_url = veeam.find_package_url(new_resource.version)
+```
+
+#### find_package_checksum(version)
+Uses the supplied version identifier to return the stored checksum for the installation media.  This method calls the package_list method to identify the correct information
+```
+# usage in a custom_resource
+veeam = Veeam::Helper
+package_checksum = veeam.find_package_checksum(new_resource.version)
+```
+
+#### prerequisites_list
+Returns an array of version specific prerequisite package versions
+```
+# usage in a custom_resource
+veeam = Veeam::Helper
+prerequisites_list = veeam.prerequisites_list(new_resource.version)
+```
+
+#### explorers_list
+Returns an array of version specific explorer package versions
+```
+# usage in a custom_resource
+veeam = Veeam::Helper
+explorers_list = veeam.explorers_list(new_resource.version)
+```
 
 ### Windows_Helper
 Testing with ChefSpec on Linux or Mac for specific Windows items such as register, Win32, etc can cause failures in the testing.  Included in this library is a helper file designed to stub and mock out these calls.
