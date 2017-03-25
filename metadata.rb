@@ -4,11 +4,11 @@ maintainer_email 'chef@exospheredata.com'
 license 'all_rights'
 description 'Installs/Configures Veeam Backup and Recovery'
 long_description 'Installs/Configures Veeam Backup and Recovery'
-version '0.7.0'
+version '0.8.0'
 
 supports 'windows'
 
-depends 'windows', '2.0.2'
+depends 'windows'
 
 # If you upload to Supermarket you should set this so your cookbook
 # gets a `View Issues` link
