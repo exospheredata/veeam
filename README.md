@@ -555,7 +555,7 @@ Included in this cookbook is a set of Inspec profile tests used for the Windows 
 ```text
 The MIT License
 
-Copyright (c) 2016 Exosphere Data, LLC
+Copyright (c) 2016-2017 Exosphere Data, LLC
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
