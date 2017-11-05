@@ -61,8 +61,9 @@ action :install do
   veeam = Veeam::Helper # Library of helper methods
   veeam.check_os_version(node)
 
-  # We will use the Windows Helper 'is_package_installed?' to see if the Server is installed.
-  return new_resource.updated_by_last_action(false) if is_package_installed?('Veeam Backup & Replication Server')
+  # We will use the Windows Helper 'is_package_installed?' to see if the Server is installed.  If it is installed, then
+  # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
+  return false if is_package_installed?('Veeam Backup & Replication Server')
 
   # We need to verify that .NET Framework 4.5.2 or higher has been installed on the machine
   raise 'The Veeam Backup and Replication Server requires that Microsoft .NET Framework 4.5.2 or higher be installed.  Please install the Veeam pre-requisites' if find_current_dotnet < 379893
@@ -111,7 +112,8 @@ action :install do
 
   unmount_installer(installer_file_name)
 
-  return new_resource.updated_by_last_action(true) if new_resource.keep_media
+  # If the 'keep_media' property is True, we should report our success but skip the file deletion code below.
+  return if new_resource.keep_media
 
   # Since the property 'keep_media' was set to false, we will need to remove it
 
@@ -120,8 +122,6 @@ action :install do
     backup false
     action :delete
   end
-
-  new_resource.updated_by_last_action(true)
 end
 
 action_class do

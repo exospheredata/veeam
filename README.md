@@ -3,6 +3,8 @@
 ---
 This cookbook installs and configures Veeam Backup and Replication based on documented Veeam best practices.  The cookbook includes recipes to deploy all components of the solution as well as the optional Explorers.
 
+_Note: Veeam prerequisites requires that Microsoft .NET Framework 4.5.2 be installed on the host.  As part of the installation, a reboot is required and will automatically be handled by the resource_
+
 ## Table of Contents
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -16,29 +18,15 @@ This cookbook installs and configures Veeam Backup and Replication based on docu
   - [Installation Media](#installation-media)
   - [Catalog](#catalog)
   - [Server](#server)
+  - [Console](#console)
 - [Veeam Backup and Replication ISO](#veeam-backup-and-replication-iso)
 - [Veeam Backup and Replication License file](#veeam-backup-and-replication-license-file)
 - [Resource/Provider](#resourceprovider)
   - [Veeam_Prerequisites](#veeam_prerequisites)
-    - [Actions:](#actions)
-    - [Properties:](#properties)
-    - [Examples:](#examples)
   - [Veeam_Catalog](#veeam_catalog)
-    - [Actions:](#actions-1)
-    - [Properties:](#properties-1)
-    - [Examples:](#examples-1)
   - [Veeam_Console](#veeam_console)
-    - [Actions:](#actions-2)
-    - [Properties:](#properties-2)
-    - [Examples:](#examples-2)
   - [Veeam_Server](#veeam_server)
-    - [Actions:](#actions-3)
-    - [Properties:](#properties-3)
-    - [Examples:](#examples-3)
   - [Veeam_Explorer](#veeam_explorer)
-    - [Actions:](#actions-4)
-    - [Properties:](#properties-4)
-    - [Examples:](#examples-4)
 - [Usage](#usage)
   - [default](#default)
   - [catalog recipe](#catalog-recipe)
@@ -51,11 +39,6 @@ This cookbook installs and configures Veeam Backup and Replication based on docu
 - [Matchers/Helpers](#matchershelpers)
   - [Matchers](#matchers)
   - [Veeam::Helper](#veeamhelper)
-    - [check_os_version](#check_os_version)
-    - [find_package_url(version)](#find_package_urlversion)
-    - [find_package_checksum(version)](#find_package_checksumversion)
-    - [prerequisites_list](#prerequisites_list)
-    - [explorers_list](#explorers_list)
   - [Windows_Helper](#windows_helper)
 - [Cookbook Testing](#cookbook-testing)
   - [Before you begin](#before-you-begin)
@@ -88,42 +71,53 @@ Windows 2008R2 and lower is _not_ supported.
 
 ## Attributes
 ### Installation Media
-- `node['veeam']['version']` - String.  Base version of Veeam to install and used to download the appropriate ISO.  Supported versions are '9.0' and '9.5'  Default value is '9.5'.
-- `node['veeam']['installer']['package_url']` - String.  Custom URL for the Veeam Backup and Replication ISO.  Default value is nil
-- `node['veeam']['installer']['package_checksum']` - String.  Sha256 hash of the remote ISO file.  Default value is nil
-- `node['veeam']['license_url']` - String.  URL for downloading the license filed used by this server.  If not provided, the default data_bag will be checked or the software will be installed in evaluation mode.  Default value is nil.
+| Attribute | Type | Description | Default Value | Mandatory |
+| --- | --- | --- | --- | --- |
+| `node['veeam']['version']` | String. | Base version of Veeam to install and used to download the appropriate ISO.  Supported versions are '9.0' and '9.5' | '9.5' | |
+| `node['veeam']['installer']['package_url']` | String. | Custom URL for the Veeam Backup and Replication ISO. If not provided, then the ISO will be downloaded directly from Veeam | nil | |
+| `node['veeam']['installer']['package_checksum']` | String. | Sha256 hash of the remote ISO file. | nil | |
+| `node['veeam']['license_url']` | String. | URL for downloading the license filed used by this server.  If not provided, the [license data_bag](#veeam-backup-and-replication-license-file) will be checked or the software will be installed in evaluation mode. | nil | |
 
 ### Catalog
-- `node['veeam']['catalog']['install_dir']` - String. Installs the component to the specified location. By default, Veeam Backup & Replication uses the Backup Catalog subfolder in the `C:\Program Files\Veeam\Backup and Replication\` folder.
-- `node['veeam']['catalog']['vm_catalogpath']` - String.  Specifies a path to the catalog folder where index files must be stored. By default, Veeam Backup & Replication uses the C:\VBRCatalog folder to store index files.
-- `node['veeam']['catalog']['vbrc_service_user']` - String. Specifies a user account under which the Veeam Guest Catalog Service will run. The account must have full control NTFS permissions on the `VM_CATALOGPATH` folder where index files are stored.  If you do not specify this parameter, the Veeam Guest Catalog Service will run under the Local System account.  NOTE: The account must be in Domain\User or Computer\User format.  If using a local account, then use either the `hostname\username` or use `.\username`
-- `node['veeam']['catalog']['vbrc_service_password']` - String. Specifies a password for the account under which the Veeam Guest Catalog Service will run.  This parameter must be used if you have specified the `VBRC_SERVICE_USER` parameter.
-- `node['veeam']['catalog']['vbrc_service_port']` - Integer.  Specifies a TCP port that will be used by the Veeam Guest Catalog Service. By default, port number 9393 is used.
-- `node['veeam']['catalog']['keep_media']` - TrueFalse.  Determines if the recipe should remove the media at the end of the installation.  Default is false
+| Attribute | Type | Description | Default Value | Mandatory |
+| --- | --- | --- | --- | --- |
+| `node['veeam']['catalog']['install_dir']` | String. | Installs the component to the specified location. By default, Veeam Backup & Replication uses the Backup Catalog subfolder in the `C:\Program Files\Veeam\Backup and Replication\` folder. | C:\Program Files\Veeam\Backup and Replication\ | |
+| `node['veeam']['catalog']['vm_catalogpath']` | String. |  Specifies a path to the catalog folder where index files must be stored. By default, Veeam Backup & Replication uses the C:\VBRCatalog folder to store index files. | C:\VBRCatalog | |
+| `node['veeam']['catalog']['vbrc_service_user']` | String. | Specifies a user account under which the Veeam Guest Catalog Service will run. The account must have full control NTFS permissions on the `VM_CATALOGPATH` folder where index files are stored.  If you do not specify this parameter, the Veeam Guest Catalog Service will run under the Local System account.  NOTE: The account must be in Domain\User or Computer\User format.  If using a local account, then use either the `hostname\username` or use `.\username` | nil | |
+| `node['veeam']['catalog']['vbrc_service_password']` | String. | Specifies a password for the account under which the Veeam Guest Catalog Service will run.  This parameter must be used if you have specified the `VBRC_SERVICE_USER` parameter. | nil | |
+| `node['veeam']['catalog']['vbrc_service_port']` | Integer. | Specifies a TCP port that will be used by the Veeam Guest Catalog Service. By default, port number 9393 is used. | 9393 | |
+| `node['veeam']['catalog']['keep_media']` | TrueFalse. | Determines if the recipe should remove the media at the end of the installation. | false | |
 
 ### Server
-- `node['veeam']['server']['accept_eula']` - TrueFalse.  Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA.  Default = false
-- `node['veeam']['server']['install_dir']` - String. Installs the component to the specified location. By default, Veeam Backup & Replication uses the Backup Catalog subfolder in the `C:\Program Files\Veeam\Backup and Replication\` folder.
-- `node['veeam']['server']['evaluation']` - Determines if the Veeam Backup and Replication server should be installed using Evaluation Mode or if a license should be attached.  Default value is true and the server will be installed with no license.
-- `node['veeam']['server']['vbr_check_updates']` - TrueFalse. Specifies if you want Veeam Backup & Replication to automatically check for new product patches and versions.
-- `node['veeam']['server']['vbr_service_user']` - String. Specifies the account under which the Veeam Backup Service will run. The account must have full control NTFS permissions on the `VBRCatalog` folder where index files are stored and the Database owner rights for the configuration database on the Microsoft SQL Server where the configuration database is deployed.  If you do not specify this parameter, the Veeam Guest Catalog Service will run under the Local System account.  NOTE: The account must be in Domain\User or Computer\User format.  If using a local account, then use either the `hostname\username` or use `.\username`
-- `node['veeam']['server']['vbr_service_password']` - String. Specifies a password for the account under which the Veeam Guest Backup Service will run.  This parameter must be used if you have specified the `VBR_SERVICE_USER` parameter.
-- `node['veeam']['server']['vbr_service_port']` - Integer.  Specifies a TCP port that will be used by the Veeam Guest Backup Service. By default, port number 9392 is used.
-- `node['veeam']['server']['vbr_secure_connections_port']` - Integer.  Specifies an SSL port used for communication between the mount server and the backup server. By default, port 9401 is used.
-- `node['veeam']['server']['vbr_sqlserver_server']` - String. Specifies a Microsoft SQL server and instance on which the configuration database will be deployed. By default, Veeam Backup & Replication uses the (local)\VEEAMSQL2012 server.  If not included or set, the recipe will install SQLExpress 2012 on the node.
-- `node['veeam']['server']['vbr_sqlserver_database']` - String. Specifies a name of the configuration database to be deployed, by default, `VeeamBackup`.
-- `node['veeam']['server']['vbr_sqlserver_auth']` - String. Specifies if you want to use the SQL Server authentication mode to connect to the Microsoft SQL Server where the Veeam Backup & Replication is deployed.  Supported Values are Windows or Mixed
-- `node['veeam']['server']['vbr_sqlserver_username']` - String. This parameter must be used if you have specified the `VBR_SQLSERVER_AUTHENTICATION` parameter.  Specifies a LoginID to connect to the Microsoft SQL Server in the SQL Server authentication mode.
-- `node['veeam']['server']['vbr_sqlserver_password']` - String. This parameter must be used if you have specified the `VBR_SQLSERVER_AUTHENTICATION` parameter.  Specifies a password to connect to the Microsoft SQL Server in the SQL Server authentication mode.
+| Attribute | Type | Description | Default Value | Mandatory |
+| --- | --- | --- | --- | --- |
+| `node['veeam']['server']['accept_eula']` | TrueFalse |  Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA. | false | X |
+| `node['veeam']['server']['install_dir']` | String | Installs the component to the specified location. By default, Veeam Backup & Replication uses the Backup Server subfolder in the `C:\Program Files\Veeam\Backup and Replication\` folder. | C:\Program Files\Veeam\Backup and Replication\ | |
+| `node['veeam']['server']['evaluation']` | TrueFalse | Determines if the Veeam Backup and Replication server should be installed using Evaluation Mode or if a license should be attached.  Default value is true and the server will be installed with no license. | true | |
+| `node['veeam']['server']['vbr_check_updates']` | TrueFalse | Specifies if you want Veeam Backup & Replication to automatically check for new product patches and versions. | false | |
+| `node['veeam']['server']['vbr_service_user']` | String | Specifies the account under which the Veeam Backup Service will run. The account must have full control NTFS permissions on the `VBRCatalog` folder where index files are stored and the Database owner rights for the configuration database on the Microsoft SQL Server where the configuration database is deployed.  If you do not specify this parameter, the Veeam Guest Catalog Service will run under the Local System account.  NOTE: The account must be in Domain\User or Computer\User format.  If using a local account, then use either the `hostname\username` or use `.\username` | Local System | |
+| `node['veeam']['server']['vbr_service_password']` | String | Specifies a password for the account under which the Veeam Guest Backup Service will run.  This parameter must be used if you have specified the `VBR_SERVICE_USER` parameter. | nil | |
+| `node['veeam']['server']['vbr_service_port']` | Integer | Specifies a TCP port that will be used by the Veeam Guest Backup Service. By default, port number 9392 is used. | 9392 | |
+| `node['veeam']['server']['vbr_secure_connections_port']` | Integer | Specifies an SSL port used for communication between the mount server and the backup server. By default, port 9401 is used. | 9401 | |
+| `node['veeam']['server']['vbr_sqlserver_server']` | String | Specifies a Microsoft SQL server and instance on which the configuration database will be deployed. By default, Veeam Backup & Replication uses the (local)\VEEAMSQL2012 server.  If not included or set, the recipe will install SQLExpress 2012 on the node. | nil | |
+| `node['veeam']['server']['vbr_sqlserver_database']` | String | Specifies a name of the configuration database to be deployed. | VeeamBackup | |
+| `node['veeam']['server']['vbr_sqlserver_auth']` | String | Specifies if you want to use the SQL Server authentication mode to connect to the Microsoft SQL Server where the Veeam Backup & Replication is deployed.  Supported Values are Windows or Mixed | nil | |
+| `node['veeam']['server']['vbr_sqlserver_username']` | String | This parameter must be used if you have specified the `VBR_SQLSERVER_AUTHENTICATION` parameter.  Specifies a LoginID to connect to the Microsoft SQL Server in the SQL Server authentication mode. | nil | |
+| `node['veeam']['server']['vbr_sqlserver_password']` | String | This parameter must be used if you have specified the `VBR_SQLSERVER_AUTHENTICATION` parameter.  Specifies a password to connect to the Microsoft SQL Server in the SQL Server authentication mode. | nil | |
+| `node['veeam']['server']['pf_ad_nfsdatastore']` | String | Specifies the vPower NFS root folder to which Instant VM Recovery cache will be stored. | C:\ProgramData\Veeam\Backup\NfsDatastore\ | |
+| `node['veeam']['server']['keep_media']` | TrueFalse |  Determines if the recipe should remove the media at the end of the installation. | false | |
+| `node['sql_server']['server_sa_password']` | String | Configures the SQL Admin password for the SQLExpress instance. | 'Veeam1234' | |
+| `node['veeam']['server']['explorers']` | Array. List of Veeam Explorers to install. | 'ActiveDirectory','Exchange','SQL','Oracle','SharePoint' | |
 
-- `node['veeam']['server']['pf_ad_nfsdatastore']` - String. Specifies the vPower NFS root folder to which Instant VM Recovery cache will be stored. By default, the `C:\ProgramData\Veeam\Backup\NfsDatastore\` folder is used.
-- `node['veeam']['server']['keep_media']` - TrueFalse.  Determines if the recipe should remove the media at the end of the installation.  Default is false
-
-- `node['sql_server']['server_sa_password']` - String.  Configures the SQL Admin password for the SQLExpress instance.  Default value is 'Veeam1234'
-- `node['veeam']['server']['explorers']` - Array. List of Veeam Explorers to install. Default values are 'ActiveDirectory','Exchange','SQL','Oracle','SharePoint'
+### Console
+| Attribute | Type | Description | Default Value | Mandatory |
+| --- | --- | --- | --- | --- |
+| `node['veeam']['console']['accept_eula']` | TrueFalse | Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA. | false | X |
+| `node['veeam']['console']['install_dir']` | String | Installs the component to the specified location. By default, Veeam Backup & Replication uses the Backup Console subfolder in the `C:\Program Files\Veeam\Backup and Replication\` folder. | C:\Program Files\Veeam\Backup and Replication\ | |
+| `node['veeam']['console']['keep_media']` | TrueFalse | Determines if the recipe should remove the media at the end of the installation. | false | |
 
 ## Veeam Backup and Replication ISO
-The attribute `node['veeam']['version']` is used to evaluate the ISO download path and checksum for the installation media.  When provided, the version selected will be downloaded based on the has found in `libraries/helper.rb`.  This media can be overridden by providing the appropriate installation media attributes - `node['veeam']['installer']['package_url']` and `node['veeam']['installer']['package_checksum']`.  By default, these attributes are `nil` and the system will download the ISO every time.
+The attribute `node['veeam']['version']` is used to evaluate the ISO download path and checksum for the installation media.  When provided, the version selected will be downloaded based on the value found in `libraries/helper.rb`.  This media path can be overridden by providing the appropriate installation media attributes - `node['veeam']['installer']['package_url']` and `node['veeam']['installer']['package_checksum']`.  By default, these attributes are `nil` and the system will download the ISO every time.
 
 | Version | ISO URL | SHA256 |
 | ------------- |-------------|-------------|
@@ -134,7 +128,7 @@ The attribute `node['veeam']['version']` is used to evaluate the ISO download pa
 The server must be licensed to unlock the full potential of the application.  The attribute `node['veeam']['server']['evaluation']` should be configured as `false`.  To license, choose one of the below options.
 
 1. Save the license file on a web server to which the Veeam Backup and Replication server can access.  Set the `node['veeam']['license_url']` attribute to include the full path to the license file.
-2. Encode the license file as a Base64 string and create a new DataBag `veeam` with an Item `license`.  Add the key license with the value as the Base64 encoded string.
+2. Encode the license file as a [Base64 string](https://www.base64encode.org/) and create a new DataBag `veeam` with an Item `license`.  Add the key license with the value as the Base64 encoded string.
 
 ```json
 {
@@ -541,6 +535,13 @@ This repo includes a **Rakefile** for common tasks
 ### Compliance Profile
 Included in this cookbook is a set of Inspec profile tests used for the Windows 2012 and greater Test-Kitchen.  These profiles can also be loaded into Chef Compliance to ensure on-going validation.  The Control files are located at `test/inspec/suite_name`
 
+- test/inspec/9.0.0.902/catalog
+- test/inspec/9.0.0.902/console
+- test/inspec/9.0.0.902/server
+- test/inspec/9.5.0.711/catalog
+- test/inspec/9.5.0.711/console
+- test/inspec/9.5.0.711/server
+
 ## Contribute
  - Fork it
  - Create your feature branch (git checkout -b my-new-feature)
@@ -550,28 +551,13 @@ Included in this cookbook is a set of Inspec profile tests used for the Windows 
 
 ## License and Author
 
-- Author:: Jeremy Goodrum ([jeremy@exospheredata.com](mailto:jeremy@exospheredata.com))
+- Author:: Exosphere Data, LLC ([chef@exospheredata.com](mailto:chef@exospheredata.com))
 
 ```text
-The MIT License
+Copyright 2017 Exosphere Data, LLC
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
 
-Copyright (c) 2016-2017 Exosphere Data, LLC
+http://www.apache.org/licenses/LICENSE-2.0
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 ```

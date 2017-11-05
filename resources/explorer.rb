@@ -63,8 +63,9 @@ action :install do
     installed_explorers.push(explorer) if is_package_installed?(explorers_list[explorer])
   end
 
-  # We will use the Windows Helper 'is_package_installed?' to see if the Server is installed.
-  return new_resource.updated_by_last_action(false) if (new_resource.explorers - installed_explorers).empty?
+  # Compare the required Explorers with those installed.  If all are installed, then
+  # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
+  return false if (new_resource.explorers - installed_explorers).empty?
 
   package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
@@ -104,7 +105,8 @@ action :install do
 
   unmount_installer(installer_file_name)
 
-  return new_resource.updated_by_last_action(true) if new_resource.keep_media
+  # If the 'keep_media' property is True, we should report our success but skip the file deletion code below.
+  return if new_resource.keep_media
 
   # Since the property 'keep_media' was set to false, we will need to remove it
 
@@ -113,8 +115,6 @@ action :install do
     backup false
     action :delete
   end
-
-  new_resource.updated_by_last_action(true)
 end
 
 action_class do

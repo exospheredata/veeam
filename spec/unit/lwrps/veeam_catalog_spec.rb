@@ -12,10 +12,10 @@ describe 'veeam::catalog' do
     stub_command('sc.exe query W3SVC').and_return 1
     stub_command(/Get-DiskImage/).and_return(false)
   end
-  context 'Install prequisite components' do
+  context 'Install Veeam Backup and Recovery Catalog' do
     platforms = {
       'windows' => {
-        'versions' => %w(2008R2 2012 2012R2)
+        'versions' => %w(2012 2012R2 2016)
       }
     }
     platforms.each do |platform, components|
@@ -23,8 +23,6 @@ describe 'veeam::catalog' do
         context "On #{platform} #{version}" do
           before do
             Fauxhai.mock(platform: platform, version: version)
-            allow(Chef::Config).to receive(:file_cache_path)
-              .and_return('...')
             # Need to set a valid .NET Framework version
             allow_any_instance_of(Chef::DSL::RegistryHelper)
               .to receive(:registry_get_values)
@@ -86,10 +84,13 @@ describe 'veeam::catalog' do
       end
     end
   end
-  context 'Test installation' do
+  context 'Does not install' do
     platforms = {
       'windows' => {
-        'versions' => %w(2003R2) # Unable to test plain Win2008 since Fauxhai doesn't have a template for 2008
+        'versions' => %w(2008R2) # Unable to test plain Win2008 since Fauxhai doesn't have a template for 2008
+      },
+      'ubuntu' => {
+        'versions' => %w(16.04)
       }
     }
     platforms.each do |platform, components|
@@ -103,7 +104,7 @@ describe 'veeam::catalog' do
             ChefSpec::SoloRunner.new(platform: platform, version: version).converge(described_recipe)
           end
           it 'raises an exception' do
-            expect { chef_run }.to raise_error('This recipe requires a Windows 2008R2 or higher host!')
+            expect { chef_run }.to raise_error(ArgumentError, 'This recipe requires a Windows 2012 or higher host!')
           end
         end
       end

@@ -62,8 +62,9 @@ action :install do
     end
   end
 
-  # Return up-to-date if all of the prerequisites are installed.
-  return new_resource.updated_by_last_action(false) if (prerequisites_list - installed_prerequisites).empty? && find_current_dotnet >= 379893
+  # Compare the required Prerequisites with those installed.  If all are installed, then
+  # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
+  return false if (prerequisites_list - installed_prerequisites).empty? && find_current_dotnet >= 379893
 
   package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
@@ -91,8 +92,6 @@ action :install do
 
   # Hey these are pre-requisites so we should probably just keep the media, right?  For this reason, I removed
   # the resource block to delete the media
-
-  new_resource.updated_by_last_action(true)
 end
 
 action_class do
