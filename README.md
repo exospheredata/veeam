@@ -6,8 +6,6 @@ This cookbook installs and configures Veeam Backup and Replication based on docu
 _Note: Veeam prerequisites requires that Microsoft .NET Framework 4.5.2 be installed on the host.  As part of the installation, a reboot is required and will automatically be handled by the resource_
 
 ## Table of Contents
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Requirements](#requirements)
@@ -16,17 +14,27 @@ _Note: Veeam prerequisites requires that Microsoft .NET Framework 4.5.2 be insta
   - [Cookbooks](#cookbooks)
 - [Attributes](#attributes)
   - [Installation Media](#installation-media)
+  - [Upgrade Details](#upgrade-details)
   - [Catalog](#catalog)
   - [Server](#server)
   - [Console](#console)
-- [Veeam Backup and Replication ISO](#veeam-backup-and-replication-iso)
-- [Veeam Backup and Replication License file](#veeam-backup-and-replication-license-file)
+  - [Proxy](#proxy)
+- [Veeam Media and Licenses](#veeam-media-and-licenses)
+  - [Veeam Backup and Replication ISO](#veeam-backup-and-replication-iso)
+  - [Veeam Backup and Replication Update Zip files](#veeam-backup-and-replication-update-zip-files)
+  - [Veeam Backup and Replication License file](#veeam-backup-and-replication-license-file)
+- [Veeam Upgrade Procedures and Details](#veeam-upgrade-procedures-and-details)
+  - [Configuring the Updates](#configuring-the-updates)
+  - [Upgrade Process and Warnings](#upgrade-process-and-warnings)
+  - [Recipes that perform automatic upgrades](#recipes-that-perform-automatic-upgrades)
 - [Resource/Provider](#resourceprovider)
   - [Veeam_Prerequisites](#veeam_prerequisites)
   - [Veeam_Catalog](#veeam_catalog)
   - [Veeam_Console](#veeam_console)
   - [Veeam_Server](#veeam_server)
   - [Veeam_Explorer](#veeam_explorer)
+  - [Veeam_Upgrade](#veeam_upgrade)
+  - [Veeam_Proxy](#veeam_proxy)
 - [Usage](#usage)
   - [default](#default)
   - [catalog recipe](#catalog-recipe)
@@ -35,6 +43,9 @@ _Note: Veeam prerequisites requires that Microsoft .NET Framework 4.5.2 be insta
   - [server_with_catalog recipe](#server_with_catalog-recipe)
   - [server_with_console recipe](#server_with_console-recipe)
   - [standalone_complete recipe](#standalone_complete-recipe)
+  - [proxy recipe](#proxy-recipe)
+  - [proxy_remove recipe](#proxy_remove-recipe)
+  - [upgrade recipe](#upgrade-recipe)
 - [Upload to Chef Server](#upload-to-chef-server)
 - [Matchers/Helpers](#matchershelpers)
   - [Matchers](#matchers)
@@ -49,8 +60,6 @@ _Note: Veeam prerequisites requires that Microsoft .NET Framework 4.5.2 be insta
 - [Contribute](#contribute)
 - [License and Author](#license-and-author)
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 ## Requirements
 
 ### Platforms
@@ -59,6 +68,9 @@ _Note: Veeam prerequisites requires that Microsoft .NET Framework 4.5.2 be insta
 - Windows Server 2016
 
 Windows 2008R2 and lower is _not_ supported.
+
+#### _Note regarding SQL Express Requirements:_
+The installation of SQL Express requires that a temporary Scheduled Task be created within Windows to perform the installation.  The reason for this workaround is due to a known limitation with Microsoft SQL installations via remote powershell executions.  This enhancement has been added to allow for the ability to perform the installation via Terraform, Knife Bootstrap, or any other remote powershell based execution process.
 
 ### Chef
 
@@ -75,8 +87,17 @@ Windows 2008R2 and lower is _not_ supported.
 | --- | --- | --- | --- | --- |
 | `node['veeam']['version']` | String. | Base version of Veeam to install and used to download the appropriate ISO.  Supported versions are '9.0' and '9.5' | '9.5' | |
 | `node['veeam']['installer']['package_url']` | String. | Custom URL for the Veeam Backup and Replication ISO. If not provided, then the ISO will be downloaded directly from Veeam | nil | |
-| `node['veeam']['installer']['package_checksum']` | String. | Sha256 hash of the remote ISO file. | nil | |
+| `node['veeam']['installer']['package_checksum']` | String. | Sha256 hash of the remote ISO file. Required when setting the `node['veeam']['installer']['package_url']`| nil | |
 | `node['veeam']['license_url']` | String. | URL for downloading the license filed used by this server.  If not provided, the [license data_bag](#veeam-backup-and-replication-license-file) will be checked or the software will be installed in evaluation mode. | nil | |
+
+### Upgrade Details
+| Attribute | Type | Description | Default Value | Mandatory |
+| --- | --- | --- | --- | --- |
+| `node['veeam']['installer']['update_url']` | String. | Custom URL for the Veeam Backup and Replication ISO or Upgrade ZIP. If not provided, then the `node['veeam']['installer']['package_url']` will be used.  | nil | |
+| `node['veeam']['installer']['update_checksum']` | String. | Sha256 hash of the remote ISO or ZIP file.  Required when setting the `node['veeam']['installer']['update_url']` | nil |
+| `node['veeam']['build']` | String | Current Veeam Build ID to be used when performing upgrades.  Will default to the value of the build found in the attribute `node['veeam']['installer']['update_url']` unless not set.  If no `node['veeam']['installer']['update_url']` provided then the value of the Build in `node['veeam']['installer']['package_url']` will be used.  Otherwise, the Value of the `node['veeam']['version']` will be assigned. | Multi | |
+| `node['veeam']['reboot_on_upgrade']` | TrueFalse | When performing an upgrade, the Veeam process will sometimes require a reboot.  This key will control if the reboot should be automatically performed at the end of the upgrade. | true | |
+| `node['veeam']['upgrade']['keep_media']` | TrueFalse | Determines if the recipe should keep the media at the end of the upgrade. | false | |
 
 ### Catalog
 | Attribute | Type | Description | Default Value | Mandatory |
@@ -86,7 +107,7 @@ Windows 2008R2 and lower is _not_ supported.
 | `node['veeam']['catalog']['vbrc_service_user']` | String. | Specifies a user account under which the Veeam Guest Catalog Service will run. The account must have full control NTFS permissions on the `VM_CATALOGPATH` folder where index files are stored.  If you do not specify this parameter, the Veeam Guest Catalog Service will run under the Local System account.  NOTE: The account must be in Domain\User or Computer\User format.  If using a local account, then use either the `hostname\username` or use `.\username` | nil | |
 | `node['veeam']['catalog']['vbrc_service_password']` | String. | Specifies a password for the account under which the Veeam Guest Catalog Service will run.  This parameter must be used if you have specified the `VBRC_SERVICE_USER` parameter. | nil | |
 | `node['veeam']['catalog']['vbrc_service_port']` | Integer. | Specifies a TCP port that will be used by the Veeam Guest Catalog Service. By default, port number 9393 is used. | 9393 | |
-| `node['veeam']['catalog']['keep_media']` | TrueFalse. | Determines if the recipe should remove the media at the end of the installation. | false | |
+| `node['veeam']['catalog']['keep_media']` | TrueFalse. | Determines if the recipe should keep the media at the end of the installation. | false | |
 
 ### Server
 | Attribute | Type | Description | Default Value | Mandatory |
@@ -105,7 +126,7 @@ Windows 2008R2 and lower is _not_ supported.
 | `node['veeam']['server']['vbr_sqlserver_username']` | String | This parameter must be used if you have specified the `VBR_SQLSERVER_AUTHENTICATION` parameter.  Specifies a LoginID to connect to the Microsoft SQL Server in the SQL Server authentication mode. | nil | |
 | `node['veeam']['server']['vbr_sqlserver_password']` | String | This parameter must be used if you have specified the `VBR_SQLSERVER_AUTHENTICATION` parameter.  Specifies a password to connect to the Microsoft SQL Server in the SQL Server authentication mode. | nil | |
 | `node['veeam']['server']['pf_ad_nfsdatastore']` | String | Specifies the vPower NFS root folder to which Instant VM Recovery cache will be stored. | C:\ProgramData\Veeam\Backup\NfsDatastore\ | |
-| `node['veeam']['server']['keep_media']` | TrueFalse |  Determines if the recipe should remove the media at the end of the installation. | false | |
+| `node['veeam']['server']['keep_media']` | TrueFalse |  Determines if the recipe should keep the media at the end of the installation. | false | |
 | `node['sql_server']['server_sa_password']` | String | Configures the SQL Admin password for the SQLExpress instance. | 'Veeam1234' | |
 | `node['veeam']['server']['explorers']` | Array. List of Veeam Explorers to install. | 'ActiveDirectory','Exchange','SQL','Oracle','SharePoint' | |
 
@@ -114,17 +135,47 @@ Windows 2008R2 and lower is _not_ supported.
 | --- | --- | --- | --- | --- |
 | `node['veeam']['console']['accept_eula']` | TrueFalse | Must be set to true or the server will not install.  Since we can download the media directly, it is a good idea to enforce the EULA. | false | X |
 | `node['veeam']['console']['install_dir']` | String | Installs the component to the specified location. By default, Veeam Backup & Replication uses the Backup Console subfolder in the `C:\Program Files\Veeam\Backup and Replication\` folder. | C:\Program Files\Veeam\Backup and Replication\ | |
-| `node['veeam']['console']['keep_media']` | TrueFalse | Determines if the recipe should remove the media at the end of the installation. | false | |
+| `node['veeam']['console']['keep_media']` | TrueFalse | Determines if the recipe should keep the media at the end of the installation. | false | |
 
-## Veeam Backup and Replication ISO
+### Proxy
+| Attribute | Type | Description | Default Value | Mandatory |
+| --- | --- | --- | --- | --- |
+| `node['veeam']['proxy']['vbr_server']` | String | DNS or IP Address of the Veeam Backup and Replication Server |  | X |
+| `node['veeam']['proxy']['vbr_port']` | String | Veeam Backup and Replication Server Port | 9392 | |
+| `node['veeam']['proxy']['vbr_username']` | String | Username with permissions to add Servers and Proxies within Veeam Backup and Replication server |  | X |
+| `node['veeam']['proxy']['vbr_password']` | String | Password for the user provided |  | X |
+| `node['veeam']['proxy']['proxy_username']` | String | Required when Adding a new Proxy.  Username with Access to the Proxy Server.  Will generate a new set of credentials within Veeam Backup and Replication server if none exist.|  | X |
+| `node['veeam']['proxy']['proxy_password']` | String | Required when Adding a new Proxy.  Password for the user provided.|  | = nil
+| `node['veeam']['proxy']['description']` | String | Description for the Proxy Server.  Will automatically start with "ADDED by CHEF: ".  Defaults to "ADDED by CHEF: Proxy Server" |  | X |
+| `node['veeam']['proxy']['max_tasks']` | String | Specifies the number of concurrent tasks that can be assigned to the proxy simultaneously. Permitted values: 1-100 | 2 | X |
+| `node['veeam']['proxy']['transport_mode']` | String | Specifies the transport mode used by the backup proxy.  Supported Values 'Auto','DirectStorageAccess','HotAdd','Nbd' | 'Auto' | X |
+| `node['veeam']['proxy']['use_ip_address']` | String | Register to Veeam using the host IP and not the Hostname. | false | |
+| `node['veeam']['proxy']['register']` | String | Determines if the proxy_server recipe should initiate a Proxy registration | true | |
+
+## Veeam Media and Licenses
+
+### Veeam Backup and Replication ISO
 The attribute `node['veeam']['version']` is used to evaluate the ISO download path and checksum for the installation media.  When provided, the version selected will be downloaded based on the value found in `libraries/helper.rb`.  This media path can be overridden by providing the appropriate installation media attributes - `node['veeam']['installer']['package_url']` and `node['veeam']['installer']['package_checksum']`.  By default, these attributes are `nil` and the system will download the ISO every time.
 
 | Version | ISO URL | SHA256 |
 | ------------- |-------------|-------------|
-| **9.0** | [VeeamBackup&Replication_9.0.0.902.iso](http://download2.veeam.com/VeeamBackup&Replication_9.0.0.902.iso) | 21f9d2c318911e668511990b8bbd2800141a7764cc97a8b78d4c2200c1225c88 |
-| **9.5** | [VeeamBackup&Replication_9.5.0.711.iso](http://download2.veeam.com/VeeamBackup&Replication_9.5.0.711.iso) | af3e3f6db9cb4a711256443894e6fb56da35d48c0b2c32d051960c52c5bc2f00 |
+| **9.0** | [VeeamBackup&Replication_9.0.0.902.iso](http://download.veeam.com/VeeamBackup&Replication_9.0.0.902.iso) | 21f9d2c318911e668511990b8bbd2800141a7764cc97a8b78d4c2200c1225c88 |
+| **9.5** | [VeeamBackup&Replication_9.5.0.711.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.711.iso) | af3e3f6db9cb4a711256443894e6fb56da35d48c0b2c32d051960c52c5bc2f00 |
+| **9.5.0.711** | [VeeamBackup&Replication_9.5.0.711.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.711.iso) | af3e3f6db9cb4a711256443894e6fb56da35d48c0b2c32d051960c52c5bc2f00 |
+| **9.5.0.1038** | [VeeamBackup&Replication_9.5.0.1038.Update2.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1038.Update2.iso) | 180b142c1092c89001ba840fc97158cc9d3a37d6c7b25c93a311115b33454977 |
+| **9.5.0.1536** | [VeeamBackup&Replication_9.5.0.1536.Update3.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.iso) | 5020ef015e4d9ff7070d43cf477511a2b562d8044975552fd08f82bdcf556a43 |
 
-## Veeam Backup and Replication License file
+
+### Veeam Backup and Replication Update Zip files
+The attribute `node['veeam']['build']` is used to evaluate the Zip download path and checksum for the installation media.  When provided, the build selected will be downloaded based on the value found in `libraries/helper.rb`.  This media path can be overridden by providing the appropriate installation media attributes - `node['veeam']['installer']['update_url']` and `node['veeam']['installer']['update_checksum']`.  By default, these attributes are matching their corresponding `node['veeam']['installer']['package_url']` and `node['veeam']['installer']['package_checksum']` values and the system will download the Zip every time.
+
+| Version | ISO URL | SHA256 |
+| ------------- |-------------|-------------|
+| **Update 1** | [VeeamBackup&Replication_9.5.0.823_Update1.zip](https://download.veeam.com/VeeamBackup&Replication_9.5.0.823_Update1.zip) | c07bdfb3b90cc609d21ba94584ba19d8eaba16faa31f74ad80814ec9288df492 |
+| **Update 2** | [VeeamBackup&Replication_9.5.0.1038.Update2.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1038.Update2.zip) | d800bf5414f1bde95fba5fddbd86146c75a5a2414b967404792cc32841cb4ffb |
+| **Update 3** | [VeeamBackup&Replication_9.5.0.1536.Update3.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.zip) | 38ed6a30aa271989477684fdfe7b98895affc19df7e1272ee646bb50a059addc |
+
+### Veeam Backup and Replication License file
 The server must be licensed to unlock the full potential of the application.  The attribute `node['veeam']['server']['evaluation']` should be configured as `false`.  To license, choose one of the below options.
 
 1. Save the license file on a web server to which the Veeam Backup and Replication server can access.  Set the `node['veeam']['license_url']` attribute to include the full path to the license file.
@@ -136,6 +187,35 @@ The server must be licensed to unlock the full potential of the application.  Th
   "license": "base64_encoded_license"
 }
 ```
+## Veeam Upgrade Procedures and Details
+The process to perform upgrades requires that the appropriate installation media is provided which contains the updates from Veeam.  This cookbook will initiate an upgrade if the currently installed versions are less than the desired Build version as defined by the attribute `node['veeam']['build']`.  When the installed version does not match the requested build version, the process will mount the ISO or extract the ZIP that contains the update and then perform an automatic upgrade of each service installed on the host.
+
+### Configuring the Updates
+Updates are identified by passing one of the following to the attributes for the server:
+1. `node['veeam']['installer']['update_url']` attribute should contain either the full installation ISO or the update ZIP link.  The file name must include the full build name like such:
+    - VeeamBackup&Replication_9.5.0.1536.Update3.iso
+    - VeeamBackup&Replication_9.5.0.1536.Update3.zip
+2. `node['veeam']['installer']['package_url']` attribute should contain either the full installation ISO.  The file name must include the full build name like such:
+    - VeeamBackup&Replication_9.5.0.1536.Update3.iso
+3. `node['veeam']['build']` attribute must be a valid and cookbook supported build version like such:
+    - 9.5 (defaults to GA)
+    - 9.5.0.711 (GA)
+    - 9.5.0.1038 (Update2)
+    - 9.5.0.1536 (Update3)
+
+### Upgrade Process and Warnings
+*Warning*
+When the upgrade is performed, the installation will upgrade all components included in the server to which the update is applied.  If the upgrade requires a reboot, this process will be automatic and initiate a reboot of the server upon completion of the work.
+
+*NOTE:*
+If the automatic upgrade should be skipped then set the following attribute on the server prior to running the upgrade:
+- `node['veeam']['reboot_on_upgrade']` = false
+
+### Recipes that perform automatic upgrades
+Ongoing updates are automatically handled by the following included recipes:
+- standalone_complete
+- proxy_server
+- upgrade
 
 
 ## Resource/Provider
@@ -186,6 +266,7 @@ Installs the Veeam Catalog Service
 
 #### Properties:
 _NOTE: properties in bold are required_
+
 * **`version`** - Installation version.  Will determine ISO download path if `package_url` is nil
 * `package_url` - Full URL to the installation media
 * `package_checksum` - sha256 checksum of the installation media
@@ -234,6 +315,7 @@ Installs the Veeam Backup and Replication Console
 
 #### Properties:
 _NOTE: properties in bold are required_
+
 * **`version`** - Installation version.  Will determine ISO download path if `package_url` is nil
 * `package_url` - Full URL to the installation media
 * `package_checksum` - sha256 checksum of the installation media
@@ -280,6 +362,7 @@ Installs the Veeam Backup and Replication Service
 
 #### Properties:
 _NOTE: properties in bold are required_
+
 * **`version`** - Installation version.  Will determine ISO download path if `package_url` is nil
 * `package_url` - Full URL to the installation media
 * `package_checksum` - sha256 checksum of the installation media
@@ -336,10 +419,11 @@ end
 Installs the Veeam Backup and Replication Explorers
 
 #### Actions:
-* `:install` - Installs the Veeam Backup and Replication Console service
+* `:install` - Installs the Veeam Backup and Replication Explorers
 
 #### Properties:
 _NOTE: properties in bold are required_
+
 * **`version`** - Installation version.  Will determine ISO download path if `package_url` is nil
 * `package_url` - Full URL to the installation media
 * `package_checksum` - sha256 checksum of the installation media
@@ -364,6 +448,100 @@ veeam_explorer 'Veeam Explorer for Microsoft SQL Server' do
   package_checksum 'sha256checksum'
   explorers 'SQL'
   action :install
+end
+```
+
+### Veeam_Upgrade
+Installs the Veeam Backup and Replication Update.  Requires that the host have an installation of one of the following:
+- Veeam Backup & Replication Console
+- Veeam Backup & Replication Server
+- Veeam Backup & Replication Catalog
+
+#### Actions:
+* `:install` - Installs the Veeam Backup and Replication Upgrade
+
+#### Properties:
+_NOTE: properties in bold are required_
+
+* `build`            - Identifies the requested build to install. Will determine Zip download path if `package_url` is nil. If not set, then will be determined based on the `package_url`
+* `package_url`      - Full URL to the installation media.  Can be an ISO or Update zip
+* `package_checksum` - sha256 checksum of the installation media
+* `keep_media`       - When set to true, the downloaded ISO or Update Zip will not be deleted.  This is helpful if you are installing multiple services on a single node.
+* `auto_reboot`      - When set to true, the system will automatically reboot if required after performing the update.
+* `package_name`     - FUTURE property
+* `share_path`       - FUTURE property
+
+#### Examples:
+```ruby
+# Automatically upgrade to Update3 by downloading the Zip from Veeam directly and reboot upon completion
+veeam_upgrade '9.5.0.1536' do
+  action :install
+end
+```
+```ruby
+# Automatically upgrade to Update3 using a custom update url and skip the automatic reboot
+veeam_explorer 'Veeam Upgrade' do
+  build       '9.5.0.1536'
+  package_url 'http://myartifactory/Veeam/installationmedia_9.5.0.1536.Update3.zip'
+  package_checksum 'sha256checksum'
+  auto_reboot false
+  action :install
+end
+```
+
+### Veeam_Proxy
+Configures the host as a Proxy Server
+
+#### Actions:
+* `:add` - Registers the Windows server to VBR and Configures as a Proxy
+* `:remove` - Removes the Proxy registration and unregisters the Windows Server from VBR
+
+#### Properties:
+_NOTE: properties in bold are required_
+
+* `package_name` - FUTURE property
+* `share_path` - FUTURE property
+
+* `*hostname*` - DNS or IP Address of the server to register as the Proxy
+* `*vbr_server*` - DNS or IP Address of the Veeam Backup and Replication Server
+* `vbr_server_port` - Veeam Backup and Replication Server Port.  Default: 9392
+* `*vbr_username*` - Username with permissions to add Servers and Proxies within Veeam Backup and Replication server
+* `*vbr_password*` - Password for the user provided
+* `*proxy_username*` - Username with Access to the Proxy Server.  Will generate a new set of credentials within Veeam Backup and Replication server if none exist.
+* `*proxy_password*` - Password for the user provided
+* `proxy_type` - Type of Proxy Server to Add.  Supported types - vmware or hyperv
+* `description` - Description for the Proxy Server.  Will automatically start with "ADDED by CHEF: ".  Defaults to "ADDED by CHEF: Proxy Server"
+* `max_tasks` - Specifies the number of concurrent tasks that can be assigned to the proxy simultaneously. Permitted values: 1-100. default: 2
+* `transport_mode` - Specifies the transport mode used by the backup proxy.  Supported Values 'Auto','DirectStorageAccess','HotAdd','Nbd'. Default: 'Auto'
+
+
+_Future Properties_
+* `datastore_mode` - Specifies the mode the proxy will use to connect to datastores.  Supported Values 'Auto' or 'Manual'.  Default: 'Auto'
+* `datastore` - Specifies the list of datastores to which the backup proxy has a direct SAN or NFS connection.
+* `enable_failover_to_ndb` - Indicates if the backup proxy must fail over to the Network transport mode if it fails to transport data in the Direct storage access or Virtual appliance transport mode. Default: false
+* `host_encryption` - Indicates if VM data must be transported over an encrypted SSL connection in the Network transport mode. Default: false
+
+
+#### Examples:
+```ruby
+# Add a new VMware Proxy and register
+veeam_proxy 'proxy01.demo.lab' do
+  vbr_server      'veeam.demo.lab'
+  vbr_username    'demo\\veeamuser'
+  vbr_password    'mysecretpassword'
+  proxy_username  'demo\\administrator'
+  proxy_password  'myextrapassword'
+  proxy_type      'vmware'
+  action :add
+end
+```
+```ruby
+# Remove the current Veeam Proxy and Server registration
+veeam_proxy 'proxy01.demo.lab' do
+  vbr_server      'veeam.demo.lab'
+  vbr_username    'demo\\veeamuser'
+  vbr_password    'mysecretpassword'
+  action :remove
 end
 ```
 
@@ -394,7 +572,17 @@ Installs and configures Veeam Backup and Replication Server & Console using the 
 
 ### standalone_complete recipe
 
-Installs and configures Veeam Backup and Replication Server, Console & the Catalog service using the default configuration including pre-requisites and SQLExpress.  Also installs all of the Veeam Backup Explorers
+Installs and configures Veeam Backup and Replication Server, Console & the Catalog service using the default configuration including pre-requisites and SQLExpress.  Also installs all of the Veeam Backup Explorers and performs an upgrade to the requested Build level.  For more information, see [Veeam Upgrade Procedures and Details](#Veeam-Upgrade-Procedures-and-Details)
+
+### proxy recipe
+
+Installs and configures Veeam Backup and Replication Console using the default configuration including pre-requisites and performs an upgrade to the requested Build level.  For more information, see [Veeam Upgrade Procedures and Details](#Veeam-Upgrade-Procedures-and-Details).  Also registers the Proxy Server to the Veeam Backup and Replication Server.
+
+### proxy_remove recipe
+Unregisters the Proxy Server and removes the Server registration from the Veeam Backup and Replication Server.
+
+### upgrade recipe
+Performs an upgrade of Veeam components to the requested Build level.  For more information, see [Veeam Upgrade Procedures and Details](#Veeam-Upgrade-Procedures-and-Details)
 
 ## Upload to Chef Server
 This cookbook should be included in each organization of your CHEF environment.  When importing, leverage Berkshelf:
@@ -416,6 +604,9 @@ _Note: Matchers should always be created in `libraries/matchers.rb` and used for
 * `install_veeam_server(resource_name)`
 * `install_veeam_prerequisites(resource_name)`
 * `install_veeam_explorer(resource_name)`
+* `add_veeam_proxy(resource_name)`
+* `remove_veeam_proxy(resource_name)`
+* `install_veeam_upgrade(resource_name)`
 
 ### Veeam::Helper
 _Note:  A helper to handle common and repeated functions_
@@ -424,41 +615,87 @@ _Note:  A helper to handle common and repeated functions_
 Determines if the current node meets the OS type and requirements. If False, then raise an Argument Errors depending if the node['platform_version'] or node['kernel']['machine'] are wrong.
 ```
 # usage in a custom_resource
-veeam = Veeam::Helper
-veeam.check_os_version(node)
+::Chef::Provider.send(:include, Veeam::Helper)
+check_os_version(node)
 ```
 
 #### find_package_url(version)
 Uses the supplied version identifier to return the stored URL location of the installation media.  This method calls the package_list method to identify the correct information
 ```
 # usage in a custom_resource
-veeam = Veeam::Helper
-package_url = veeam.find_package_url(new_resource.version)
+::Chef::Provider.send(:include, Veeam::Helper)
+package_url = find_package_url(new_resource.version)
 ```
 
 #### find_package_checksum(version)
 Uses the supplied version identifier to return the stored checksum for the installation media.  This method calls the package_list method to identify the correct information
 ```
 # usage in a custom_resource
-veeam = Veeam::Helper
-package_checksum = veeam.find_package_checksum(new_resource.version)
+::Chef::Provider.send(:include, Veeam::Helper)
+package_checksum = find_package_checksum(new_resource.version)
+```
+
+#### find_update_url(version)
+Uses the supplied version identifier to return the stored URL location of the update media.  This method calls the update_list method to identify the correct information
+```
+# usage in a custom_resource
+::Chef::Provider.send(:include, Veeam::Helper)
+update_url = find_update_url(new_resource.version)
+```
+
+#### find_update_checksum(version)
+Uses the supplied version identifier to return the stored checksum for the update media.  This method calls the update_list method to identify the correct information
+```
+# usage in a custom_resource
+::Chef::Provider.send(:include, Veeam::Helper)
+update_checksum = find_update_checksum(new_resource.version)
 ```
 
 #### prerequisites_list
 Returns an array of version specific prerequisite package versions
 ```
 # usage in a custom_resource
-veeam = Veeam::Helper
-prerequisites_list = veeam.prerequisites_list(new_resource.version)
+::Chef::Provider.send(:include, Veeam::Helper)
+prerequisites_list = prerequisites_list(new_resource.version)
 ```
 
 #### explorers_list
 Returns an array of version specific explorer package versions
 ```
 # usage in a custom_resource
-veeam = Veeam::Helper
-explorers_list = veeam.explorers_list(new_resource.version)
+::Chef::Provider.send(:include, Veeam::Helper)
+explorers_list = explorers_list(new_resource.version)
 ```
+
+#### find_current_dotnet
+Returns the current installed version of .NET
+
+#### validate_powershell_out(script, timeout: nil)
+Sends command data to the powershell_out method and validates the output contains no errors
+
+#### find_current_veeam_solutions(package_name)
+Determine the install location based on the supplied Package Name.  Expected values are:
+- Veeam Backup & Replication Console
+- Veeam Backup & Replication Server
+- Veeam Backup & Replication Catalog
+
+#### find_current_veeam_version(package_name)
+Determine the build version for the installed packages.  Expected values are:
+- Veeam Backup & Replication Console
+- Veeam Backup & Replication Server
+- Veeam Backup & Replication Catalog
+
+#### iso_installer(downloaded_file_name, new_resource)
+Helper method to download and mount the ISO media
+
+#### extract_installer(downloaded_file_name, new_resource)
+Helper method to download and extract the Update Zip files.  The files will be save in the default :file_cache location in a subdirectory called `Veeam/<filename>/Updates`
+
+#### unmount_installer(downloaded_file_name)
+Helper method to find and unmount the ISO media
+
+#### get_media_installer_location(downloaded_file_name)
+Helper method to determine the drive letter of the mounted ISO media
 
 ### Windows_Helper
 Testing with ChefSpec on Linux or Mac for specific Windows items such as register, Win32, etc can cause failures in the testing.  Included in this library is a helper file designed to stub and mock out these calls.
@@ -521,6 +758,12 @@ This repo includes a **Rakefile** for common tasks
 | **rake integration:kitchen:server-with-console-windows-2016** | Run server-with-console-windows-2016 test instance |
 | **rake integration:kitchen:standalone-complete-windows-2012r2** | Run standalone-complete-windows-2012r2 test instance |
 | **rake integration:kitchen:standalone-complete-windows-2016** | Run standalone-complete-windows-2016 test instance |
+| **rake integration:kitchen:proxy-server-2012r2** | Run proxy-server-2012r2 test instance |
+| **rake integration:kitchen:proxy-server-2016** | Run proxy-server-2016 test instance |
+| **rake integration:kitchen:proxy-remove-2012r2** | Run proxy-remove-2012r2 test instance |
+| **rake integration:kitchen:proxy-remove-2016** | Run proxy-remove-2016 test instance |
+| **rake integration:kitchen:upgrade-2012r2** | Run upgrade-2012r2 test instance |
+| **rake integration:kitchen:upgrade-2016** | Run upgrade-2016 test instance |
 | **rake maintainers:generate** | Generate MarkDown version of MAINTAINERS file |
 
 ### Chefspec and Test-Kitchen
@@ -551,13 +794,19 @@ Included in this cookbook is a set of Inspec profile tests used for the Windows 
 
 ## License and Author
 
+_Note: This cookbook is not officially supported by or released by Veeam Software, Inc._
+
 - Author:: Exosphere Data, LLC ([chef@exospheredata.com](mailto:chef@exospheredata.com))
 
 ```text
 Copyright 2017 Exosphere Data, LLC
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+except in compliance with the License. You may obtain a copy of the License at:
 
 http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+Unless required by applicable law or agreed to in writing, software distributed under the
+License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+either express or implied. See the License for the specific language governing permissions
+and limitations under the License.
 ```

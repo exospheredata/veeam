@@ -1,0 +1,34 @@
+# Install SQL Server
+
+<%= @sql_build_command %> | Out-File <%= @outputFilePath %>
+
+$results = @{}
+$results.Add('output','Successfully installed SQL Server')
+$results.Add('error',$null)
+
+$error_list = Select-String -Path <%= @outputFilePath %> -Pattern Error
+if ($error_list) {
+	$results.output = "Failure to install SQL Server"
+	$StdErr = $(Get-Content -Path <%= @outputFilePath %> )
+	$line_no = 0 # Sets the line counter to the first element of the array
+	$start_line = 0 # Sets the default line as the first in the element
+	$stop_line = $StdErr.length # If something crazy happens, we can fall back to return the remainder of the file.
+
+	# The output comes back as an array and we need to extract only the valid error message.  I expect
+	# that there will only be one error to correct as the fatal so since I haven't been able to reproduce
+	# multiple crashes, this will only report the first error.
+	foreach ($line in $StdErr){
+	  if($line -match "The following error occurred:"){
+	    $start_line = $line_no
+	    }
+	  if($line -match "Result error code:"){
+	    $stop_line = $line_no
+	    }
+	  $line_no++
+	}
+	$results.error = $($StdErr[$start_line..$stop_line]) -Join("`r`n")
+}
+
+Remove-Item <%= @outputFilePath %> -Confirm:$False -ErrorAction SilentlyContinue | Out-Null
+
+Set-Content -Path <%= @outputFilePath %> -Value ($results | ConvertTo-Json)

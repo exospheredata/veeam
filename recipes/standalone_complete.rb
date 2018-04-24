@@ -53,6 +53,7 @@ veeam_server 'Install Veeam Backup Server' do
   vbr_service_user node['veeam']['server']['vbr_service_user']
   vbr_service_password node['veeam']['server']['vbr_service_password']
   vbr_service_port node['veeam']['server']['vbr_service_port']
+  vbr_check_updates true
   keep_media true
   action :install
 end
@@ -63,5 +64,13 @@ veeam_explorer 'Install Veeam Backup Explorers' do
   version node['veeam']['version']
   explorers node['veeam']['server']['explorers']
   keep_media node['veeam']['console']['keep_media'] || node['veeam']['server']['keep_media']
+  action :install
+end
+
+veeam_upgrade node['veeam']['build'] do
+  package_url node['veeam']['installer']['update_url']
+  package_checksum node['veeam']['installer']['update_checksum']
+  keep_media node['veeam']['upgrade']['keep_media']
+  auto_reboot node['veeam']['reboot_on_upgrade']
   action :install
 end
