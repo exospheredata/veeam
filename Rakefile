@@ -75,3 +75,9 @@ task integration: ['integration:kitchen:all']
 
 # Default
 task default: %w(style unit)
+
+desc 'Run Local Development tests: Style, Foodcritic, Maintainers, Unit Tests, and Test-Kitchen'
+task local: %w(style unit integration)
+
+desc 'Autocorrect Rubocop Style errors'
+task auto_correct: %w(style:ruby:auto_correct)

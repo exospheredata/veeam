@@ -23,6 +23,7 @@ describe 'veeam::standalone_complete' do
         context "On #{platform} #{version}" do
           before do
             Fauxhai.mock(platform: platform, version: version)
+            node.normal['veeam']['build'] = '9.5.0.1536'
           end
           let(:runner) do
             ChefSpec::SoloRunner.new(platform: platform, version: version, file_cache_path: '/tmp/cache')
@@ -37,6 +38,7 @@ describe 'veeam::standalone_complete' do
             expect(chef_run).to install_veeam_console('Install Veeam Backup Console')
             expect(chef_run).to install_veeam_server('Install Veeam Backup Server')
             expect(chef_run).to install_veeam_explorer('Install Veeam Backup Explorers')
+            expect(chef_run).to install_veeam_upgrade('9.5.0.1536').with(package_url: node['veeam']['installer']['update_url'])
           end
         end
       end

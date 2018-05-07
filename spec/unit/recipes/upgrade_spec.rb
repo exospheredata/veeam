@@ -1,12 +1,15 @@
 #
-# Cookbook Name:: veeam
-# Spec:: console
+# Cookbook:: veeam
+# Spec:: upgrade_spec
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# maintainer:: Exosphere Data, LLC
+# maintainer_email:: chef@exospheredata.com
+#
+# Copyright:: 2018, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
-describe 'veeam::console' do
+describe 'veeam::upgrade' do
   before do
     mock_windows_system_framework # Windows Framework Helper from 'spec/windows_helper.rb'
     stub_command('sc.exe query W3SVC').and_return 1
@@ -22,6 +25,7 @@ describe 'veeam::console' do
         context "On #{platform} #{version}" do
           before do
             Fauxhai.mock(platform: platform, version: version)
+            node.normal['veeam']['build'] = '9.5.0.1536'
           end
           let(:runner) do
             ChefSpec::SoloRunner.new(platform: platform, version: version, file_cache_path: '/tmp/cache')
@@ -31,8 +35,7 @@ describe 'veeam::console' do
 
           it 'converges successfully' do
             expect { chef_run }.not_to raise_error
-            expect(chef_run).to install_veeam_prerequisites('Install Veeam Prerequisites')
-            expect(chef_run).to install_veeam_console('Install Veeam Backup console')
+            expect(chef_run).to install_veeam_upgrade('9.5.0.1536').with(package_url: node['veeam']['installer']['update_url'])
           end
         end
       end

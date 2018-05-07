@@ -1,5 +1,9 @@
+AllCops:
+  TargetRubyVersion: 2.3
 Metrics/LineLength:
   Max: 120
+Style/FrozenStringLiteralComment:
+  Enabled: false
 Style/TrailingCommaInLiteral:
   # ChefAutomate will throw an error due to chages in protocol after
   # Rubocop 0.39.0.

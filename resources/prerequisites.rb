@@ -34,37 +34,37 @@ property :install_sql, [TrueClass, FalseClass], default: false
 
 # We need to include the windows helpers to keep things dry
 ::Chef::Provider.send(:include, Windows::Helper)
+::Chef::Provider.send(:include, Veeam::Helper)
 
 action :install do
-  veeam = Veeam::Helper # Library of helper methods
-  veeam.check_os_version(node)
+  check_os_version(node)
 
   # Call the Veeam::Helper to find the correct URL based on the version of the Veeam Backup and Recovery edition passed
   # as an attribute.
   unless new_resource.package_url
-    new_resource.package_url = veeam.find_package_url(new_resource.version)
-    new_resource.package_checksum = veeam.find_package_checksum(new_resource.version)
+    new_resource.package_url = find_package_url(new_resource.version)
+    new_resource.package_checksum = find_package_checksum(new_resource.version)
   end
 
   # Halt this process now.  There is no URL for the package.
   raise ArgumentError, 'You must provide a package URL or choose a valid version' unless new_resource.package_url
 
   # Determine if all of the Veeam pre-requisites are installed and if so, then skip the processing.
-  prerequisites_list = []
+  prerequisites_required  = []
   installed_prerequisites = []
-  prerequisites_hash = veeam.prerequisites_list(new_resource.version)
+  prerequisites_hash      = prerequisites_list(new_resource.version)
 
   prerequisites_hash.each do |item, prerequisites|
     package_name = prerequisites.map { |k, _v| k }.join(',')
     unless item == 'SQL' && new_resource.install_sql == false
-      prerequisites_list.push(package_name)
+      prerequisites_required.push(package_name)
       installed_prerequisites.push(package_name) if is_package_installed?(package_name)
     end
   end
 
   # Compare the required Prerequisites with those installed.  If all are installed, then
   # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
-  return false if (prerequisites_list - installed_prerequisites).empty? && find_current_dotnet >= 379893
+  return false if (prerequisites_required - installed_prerequisites).empty? && find_current_dotnet >= 379893
 
   package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
@@ -81,7 +81,7 @@ action :install do
   Chef::Log.debug('Downloading Veeam Backup and Recovery software via URL')
   package_name = new_resource.package_url.split('/').last
   installer_file_name = win_friendly_path(::File.join(package_save_dir, package_name))
-  download_installer(installer_file_name)
+  iso_installer(installer_file_name, new_resource)
 
   install_dotnet(installer_file_name)
   install_sql_tools(installer_file_name)
@@ -97,71 +97,6 @@ end
 action_class do
   def whyrun_supported?
     true
-  end
-
-  def find_current_dotnet
-    installed_version = nil
-    installed_version_reg_key = registry_get_values('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full')
-    unless installed_version_reg_key.nil?
-      installed_version_reg_key.each do |key|
-        installed_version = key[:data] if key[:name] == 'Release'
-      end
-    end
-    installed_version.nil? ? 0 : installed_version
-  end
-
-  def validate_powershell_out(script)
-    # This seemed like the DRYest way to handle the output handling from PowerShell.
-    cmd = powershell_out(script)
-    # Check powershell output
-    raise cmd.inspect if cmd.stderr != ''
-    cmd.stdout.chop
-  end
-
-  def download_installer(downloaded_file_name)
-    # Download the Installer media
-    remote_file downloaded_file_name do
-      source new_resource.package_url
-      checksum new_resource.package_checksum
-      provider Chef::Provider::RemoteFile
-      use_conditional_get true # this should allow us to prevent duplicate downloads
-      action :create
-    end
-
-    # Mounting the Veeam backup ISO.
-    powershell_script 'Load Veeam media' do
-      code <<-EOH
-        Mount-DiskImage -ImagePath "#{downloaded_file_name}"
-      EOH
-      guard_interpreter :powershell_script
-      not_if "[boolean] (Get-DiskImage -ImagePath '#{downloaded_file_name}').DevicePath"
-    end
-  end
-
-  def unmount_installer(downloaded_file_name)
-    # Unmount the Veeam backup ISO.
-    powershell_script 'Dismount Veeam media' do
-      code <<-EOH
-        Dismount-DiskImage -ImagePath "#{downloaded_file_name}"
-      EOH
-      guard_interpreter :powershell_script
-      only_if "[boolean] (Get-DiskImage -ImagePath '#{downloaded_file_name}').DevicePath"
-    end
-  end
-
-  def get_media_installer_location(downloaded_file_name)
-    # When downloading and mounting the ISO, we need to track back to the Drive Letter.  This method will handle
-    # the look-up and keep the logic out of the main installation code.
-    Chef::Log.debug 'Searching for the Veeam installation media Drive Letter...'
-    cmd_str = <<-EOH
-      $DriveLetter = (Get-DiskImage -ImagePath '#{downloaded_file_name}' | Get-Volume).DriveLetter;
-      if ( [string]::IsNullOrEmpty($DriveLetter) ){ throw 'The ISO did not mount and we have no idea why.' }
-      return ( $DriveLetter +':\' )
-    EOH
-    output = validate_powershell_out(cmd_str)
-    raise ArgumentError, 'Unable to find the Veeam installation media' unless output
-    Chef::Log.debug "Found the Veeam installation media at Drive Letter [#{output}]"
-    output
   end
 
   def install_dotnet(downloaded_file_name)
@@ -188,7 +123,7 @@ action_class do
   end
 
   def install_sql_tools(downloaded_file_name)
-    prerequisites_hash = Veeam::Helper.prerequisites_list(new_resource.version)
+    prerequisites_hash = prerequisites_list(new_resource.version)
 
     prerequisites = {}
     prerequisites_hash.each do |item, prereq|
@@ -219,8 +154,10 @@ action_class do
     installed_version_reg_key = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\\MSSQL11.SQLEXPRESS\MSSQLServer\CurrentVersion'
     return 'Already Installed' if registry_key_exists?(installed_version_reg_key, :machine)
     config_file_path = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'ConfigurationFile.ini'))
+    output_file      = win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'sql_install.log'))
+    sql_build_script = win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'sql_build_script.ps1'))
 
-    sql_sys_admin_list = 'NT AUTHORITY\SYSTEM'
+    sql_sys_admin_list = "NT AUTHORITY\\SYSTEM\" \"#{node['hostname']}\\#{ENV['USERNAME']}"
     sql_sys_admin_list = node['veeam']['server']['vbr_service_user'] if node['veeam']['server']['vbr_service_user']
 
     template config_file_path do
@@ -232,19 +169,105 @@ action_class do
         sqlSysAdminList: sql_sys_admin_list
       )
     end
+
     ruby_block 'Install the SQL Express' do
       block do
         install_media_path = get_media_installer_location(downloaded_file_name)
-        windows_package 'Microsoft SQL Server 2014 (64-bit)' do
-          source "#{install_media_path}\\Redistr\\x64\\SQLEXPR_x64_ENU.exe"
-          timeout 1500
-          installer_type :custom
-          provider       Chef::Provider::Package::Windows
-          options "/q /ConfigurationFile=#{config_file_path}"
-          action :install
-          returns [0, 42, 127, 3010]
+        sql_installer      = "#{install_media_path}\\Redistr\\x64\\SQLEXPR_x64_ENU.exe"
+
+        template sql_build_script do
+          backup false
+          sensitive true
+          source ::File.join('sql_server', 'sql_build_script.ps1.erb')
+          variables(
+            sql_build_command: "#{sql_installer} /q /ConfigurationFile=#{config_file_path}",
+            outputFilePath: output_file
+          )
+          action :create
         end
+
+        setup_task(sql_build_script)
       end
     end
+
+    ruby_block 'Check SQL Install State' do
+      block do
+        monitor_task_status('Setup SQL Install Task')
+        Chef::Log.debug 'Check the status of the install'
+        cmd_str = <<-EOH
+          $results = ( Get-Content -Path #{output_file} | Out-String | ConvertFrom-Json );
+          if (-not [string]::IsNullOrEmpty($results.error) ){ throw $results.error }
+        EOH
+        cmd = powershell_out(cmd_str)
+        # Check powershell output
+        raise cmd.stderr if cmd.stderr != ''
+      end
+      action :run
+    end
+
+    [config_file_path, sql_build_script].each do |filename|
+      file filename do
+        action :delete
+        backup false
+      end
+    end
+
+    windows_task 'Remove SQL Install Task' do
+      task_name 'Setup SQL Install Task'
+      action :delete
+    end
+  end
+
+  def setup_task(sql_build_script)
+    windows_task 'Setup SQL Install Task' do
+      command "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -File #{sql_build_script}"
+      run_level :highest
+      frequency :onstart
+      action :create
+    end
+
+    powershell_script 'Modify Task to allow execution on laptop' do
+      code <<-EOH
+        $TaskName = 'Setup SQL Install Task'
+        $Task = Get-ScheduledTask -TaskName $TaskName
+        if($Task){
+          $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -Compatibility 'Win8'
+          Set-ScheduledTask -TaskName $TaskName -Settings $Settings
+        }
+      EOH
+      action :run
+      notifies :run, 'windows_task[Setup SQL Install Task]', :immediately
+    end
+  end
+
+  def monitor_task_status(task_name)
+    Chef::Log.info "#{task_name}: Monitoring Task until completion"
+    cmd_str = <<-EOH
+      $TaskName = "#{task_name}";
+        $Task = Get-ScheduledTask -TaskName $TaskName
+        while($Task.State -eq "Running")
+        {
+            Start-Sleep -s 5
+            $Task = Get-ScheduledTask -TaskName $TaskName
+        }
+        if($Task.State -eq "Ready"){
+            $TaskResults = ($Task | Get-ScheduledTaskInfo)
+            if($TaskResults.LastTaskResult -ne 0){
+                throw $($TaskName + ": failed to execute.  Error code {0}" -f $TaskResults.LastTaskResult)
+            } else {
+          return # Success
+        }
+        } else {
+            throw $($Task | Get-ScheduledTaskInfo).LastTaskResult
+        }
+        EOH
+    # We need to extend this time in the event there is a long running task that we have to wait to complete.
+    # The default is 600 but we will bump to 3600
+    #
+    # TODO: make the timeout on tasks variable
+    cmd = powershell_out(cmd_str, timeout: 5400)
+    # Check powershell output
+    raise cmd.stderr unless cmd.stderr.nil? || cmd.stderr.empty?
+    Chef::Log.debug "#{task_name}: Monitoring Task completed"
   end
 end

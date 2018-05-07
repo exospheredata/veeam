@@ -37,10 +37,10 @@ property :keep_media, [TrueClass, FalseClass], default: false
 
 # We need to include the windows helpers to keep things dry
 ::Chef::Provider.send(:include, Windows::Helper)
+::Chef::Provider.send(:include, Veeam::Helper)
 
 action :install do
-  veeam = Veeam::Helper # Library of helper methods
-  veeam.check_os_version(node)
+  check_os_version(node)
 
   # We will use the Windows Helper 'is_package_installed?' to see if the Console is installed.  If it is installed, then
   # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
@@ -63,8 +63,8 @@ action :install do
   # Call the Veeam::Helper to find the correct URL based on the version of the Veeam Backup and Recovery edition passed
   # as an attribute.
   unless new_resource.package_url
-    new_resource.package_url = veeam.find_package_url(new_resource.version)
-    new_resource.package_checksum = veeam.find_package_checksum(new_resource.version)
+    new_resource.package_url = find_package_url(new_resource.version)
+    new_resource.package_checksum = find_package_checksum(new_resource.version)
     Chef::Log.info(new_resource.package_url)
   end
 
@@ -78,7 +78,7 @@ action :install do
   Chef::Log.debug('Downloading Veeam Backup and Recovery software via URL')
   package_name = new_resource.package_url.split('/').last
   installer_file_name = win_friendly_path(::File.join(package_save_dir, package_name))
-  download_installer(installer_file_name)
+  iso_installer(installer_file_name, new_resource)
 
   ruby_block 'Install the Backup console application' do
     block do
@@ -107,70 +107,6 @@ end
 action_class do
   def whyrun_supported?
     true
-  end
-
-  def find_current_dotnet
-    installed_version = nil
-    installed_version_reg_key = registry_get_values('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full')
-    unless installed_version_reg_key.nil?
-      installed_version_reg_key.each do |key|
-        installed_version = key[:data] if key[:name] == 'Release'
-      end
-    end
-    installed_version.nil? ? 0 : installed_version
-  end
-
-  def validate_powershell_out(script)
-    # This seemed like the DRYest way to handle the output handling from PowerShell.
-    cmd = powershell_out(script)
-    # Check powershell output
-    raise cmd.inspect if cmd.stderr != ''
-    cmd.stdout.chop
-  end
-
-  def download_installer(downloaded_file_name)
-    # Download the Installer media
-    remote_file downloaded_file_name do
-      source new_resource.package_url
-      checksum new_resource.package_checksum
-      use_conditional_get true # this should allow us to prevent duplicate downloads
-      action :create
-    end
-
-    # Mounting the Veeam backup ISO.
-    powershell_script 'Load Veeam media' do
-      code <<-EOH
-        Mount-DiskImage -ImagePath "#{downloaded_file_name}"
-      EOH
-      guard_interpreter :powershell_script
-      not_if "[boolean] (Get-DiskImage -ImagePath '#{downloaded_file_name}').DevicePath"
-    end
-  end
-
-  def unmount_installer(downloaded_file_name)
-    # Unmount the Veeam backup ISO.
-    powershell_script 'Dismount Veeam media' do
-      code <<-EOH
-        Dismount-DiskImage -ImagePath "#{downloaded_file_name}"
-      EOH
-      guard_interpreter :powershell_script
-      only_if "[boolean] (Get-DiskImage -ImagePath '#{downloaded_file_name}').DevicePath"
-    end
-  end
-
-  def get_media_installer_location(downloaded_file_name)
-    # When downloading and mounting the ISO, we need to track back to the Drive Letter.  This method will handle
-    # the look-up and keep the logic out of the main installation code.
-    Chef::Log.debug 'Searching for the Veeam installation media Drive Letter...'
-    cmd_str = <<-EOH
-      $DriveLetter = (Get-DiskImage -ImagePath '#{downloaded_file_name}' | Get-Volume).DriveLetter;
-      if ( [string]::IsNullOrEmpty($DriveLetter) ){ throw 'The ISO did not mount and we have no idea where why.' }
-      return ( $DriveLetter +':\' )
-    EOH
-    output = validate_powershell_out(cmd_str)
-    raise ArgumentError, 'Unable to find the Veeam installation media' unless output
-    Chef::Log.debug "Found the Veeam installation media at Drive Letter [#{output}]"
-    output
   end
 
   def perform_console_install(install_media_path)

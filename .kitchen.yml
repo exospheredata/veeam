@@ -111,3 +111,43 @@ suites:
           accept_eula: true
         console:
           accept_eula: true
+  - name: proxy_server
+    run_list:
+      - recipe[veeam::proxy_server]
+    verifier:
+      inspec_tests:
+        - test/inspec/9.5.0.711/console
+    attributes:
+      veeam:
+        version: '9.5'
+        console:
+          accept_eula: true
+        proxy:
+          register: false
+  - name: proxy_remove
+    run_list:
+      - recipe[veeam::proxy_remove]
+    verifier:
+      inspec_tests:
+        - test/inspec/9.5.0.711/console
+    attributes:
+      veeam:
+        version: '9.5'
+        console:
+          accept_eula: true
+        proxy:
+          register: false
+  - name: upgrade
+    run_list:
+      - recipe[veeam::server]
+      - recipe[veeam::upgrade]
+    verifier:
+      inspec_tests:
+        - test/inspec/9.5.0.711/server
+    attributes:
+      veeam:
+        version: '9.5.0.1536'
+        server:
+          accept_eula: true
+        console:
+          accept_eula: true
