@@ -19,6 +19,7 @@ _Note: Veeam prerequisites requires that Microsoft .NET Framework 4.5.2 be insta
   - [Server](#server)
   - [Console](#console)
   - [Proxy](#proxy)
+  - [Host](#host)
 - [Veeam Media and Licenses](#veeam-media-and-licenses)
   - [Veeam Backup and Replication ISO](#veeam-backup-and-replication-iso)
   - [Veeam Backup and Replication Update Zip files](#veeam-backup-and-replication-update-zip-files)
@@ -35,6 +36,7 @@ _Note: Veeam prerequisites requires that Microsoft .NET Framework 4.5.2 be insta
   - [Veeam_Explorer](#veeam_explorer)
   - [Veeam_Upgrade](#veeam_upgrade)
   - [Veeam_Proxy](#veeam_proxy)
+  - [Veeam_Host](#veeam_host)
 - [Usage](#usage)
   - [default](#default)
   - [catalog recipe](#catalog-recipe)
@@ -46,6 +48,7 @@ _Note: Veeam prerequisites requires that Microsoft .NET Framework 4.5.2 be insta
   - [proxy recipe](#proxy-recipe)
   - [proxy_remove recipe](#proxy_remove-recipe)
   - [upgrade recipe](#upgrade-recipe)
+  - [host_mgmt recipe](#host_mgmt-recipe)
 - [Upload to Chef Server](#upload-to-chef-server)
 - [Matchers/Helpers](#matchershelpers)
   - [Matchers](#matchers)
@@ -152,6 +155,20 @@ The installation of SQL Express requires that a temporary Scheduled Task be crea
 | `node['veeam']['proxy']['use_ip_address']` | String | Register to Veeam using the host IP and not the Hostname. | false | |
 | `node['veeam']['proxy']['register']` | String | Determines if the proxy_server recipe should initiate a Proxy registration | true | |
 
+### Host
+| Attribute | Type | Description | Default Value | Mandatory |
+| --- | --- | --- | --- | --- |
+| `node['veeam']['host']['vbr_server']` | String | DNS or IP Address of the Veeam Backup and Replication Server |  |  |
+| `node['veeam']['host']['vbr_port']` | String | Veeam Backup and Replication Server Port | 9392 | |
+| `node['veeam']['host']['vbr_username']` | String | Username with permissions to add Servers and Proxies within Veeam Backup and Replication server |  |  |
+| `node['veeam']['host']['vbr_password']` | String | Password for the user provided |  |  |
+| `node['veeam']['host']['host_username']` | String | Required when Adding a new Proxy.  Username with Access to the Proxy Server.  Will generate a new set of credentials within Veeam Backup and Replication server if none exist.|  |  |
+| `node['veeam']['host']['host_password']` | String | Required when Adding a new Proxy.  Password for the user provided.|  | |
+| `node['veeam']['host']['description']` | String | Description for the Proxy Server.  Will automatically start with "ADDED by CHEF: ".  Defaults to "ADDED by CHEF: Proxy Server" |  |  |
+| `node['veeam']['host']['server']` | String | Hostname or IP address of the Server to register. |  |  |
+| `node['veeam']['host']['type']` | String | Type of Server to add to the Veeam VBR Server.  Supported types:<ol><li>vmware</li><li>esxi</li><li>esx_legacy</li><li>hyperv</li><li>hyperv_cluster</li><li>hyperv_scvmm</li><li>smbv3_host</li><li>smbv3_cluster</li><li>windows</li><li>linux</li></ol> |  |  |
+| `node['veeam']['host']['action']` | String | Determines if the Host should be added or removed.  Supported types:<ol><li>add</li><li>remove</li></ol> | 'add' | |
+
 ## Veeam Media and Licenses
 
 ### Veeam Backup and Replication ISO
@@ -164,6 +181,7 @@ The attribute `node['veeam']['version']` is used to evaluate the ISO download pa
 | **9.5.0.711** | [VeeamBackup&Replication_9.5.0.711.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.711.iso) | af3e3f6db9cb4a711256443894e6fb56da35d48c0b2c32d051960c52c5bc2f00 |
 | **9.5.0.1038** | [VeeamBackup&Replication_9.5.0.1038.Update2.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1038.Update2.iso) | 180b142c1092c89001ba840fc97158cc9d3a37d6c7b25c93a311115b33454977 |
 | **9.5.0.1536** | [VeeamBackup&Replication_9.5.0.1536.Update3.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.iso) | 5020ef015e4d9ff7070d43cf477511a2b562d8044975552fd08f82bdcf556a43 |
+| **9.5.0.1922** | [VeeamBackup&Replication_9.5.0.1922.Update3a.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.iso) | 9a6fa7d857396c058b2e65f20968de56f96bc293e0e8fd9f1a848c7d71534134 |
 
 
 ### Veeam Backup and Replication Update Zip files
@@ -174,6 +192,7 @@ The attribute `node['veeam']['build']` is used to evaluate the Zip download path
 | **Update 1** | [VeeamBackup&Replication_9.5.0.823_Update1.zip](https://download.veeam.com/VeeamBackup&Replication_9.5.0.823_Update1.zip) | c07bdfb3b90cc609d21ba94584ba19d8eaba16faa31f74ad80814ec9288df492 |
 | **Update 2** | [VeeamBackup&Replication_9.5.0.1038.Update2.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1038.Update2.zip) | d800bf5414f1bde95fba5fddbd86146c75a5a2414b967404792cc32841cb4ffb |
 | **Update 3** | [VeeamBackup&Replication_9.5.0.1536.Update3.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.zip) | 38ed6a30aa271989477684fdfe7b98895affc19df7e1272ee646bb50a059addc |
+| **Update 3a** | [VeeamBackup&Replication_9.5.0.1922.Update3a.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.zip) | f6b3fc0963b09362c535ef49691c51d368266cc91d6833c80c70342161bb7123 |
 
 ### Veeam Backup and Replication License file
 The server must be licensed to unlock the full potential of the application.  The attribute `node['veeam']['server']['evaluation']` should be configured as `false`.  To license, choose one of the below options.
@@ -545,6 +564,51 @@ veeam_proxy 'proxy01.demo.lab' do
 end
 ```
 
+### Veeam_Host
+Registers the host as a specific type to the Veeam VBR Server
+
+#### Actions:
+* `:add` - Registers the server to VBR
+* `:remove` - Unregisters the Server from VBR
+
+#### Properties:
+_NOTE: properties in bold are required_
+
+* `*hostname*` - DNS or IP Address of the server to register as the Proxy
+* `*vbr_server*` - DNS or IP Address of the Veeam Backup and Replication Server
+* `vbr_server_port` - Veeam Backup and Replication Server Port.  Default: 9392
+* `*vbr_username*` - Username with permissions to add Servers and Proxies within Veeam Backup and Replication server
+* `*vbr_password*` - Password for the user provided
+* `*host_username*` - Username with Access to the Server.  Will generate a new set of credentials within Veeam Backup and Replication server if none exist.
+* `*host_password*` - Password for the user provided
+* `*host_type*` - Type of Server to Add.  Supported types - vmware, esxi, esx_legacy, hyperv, hyperv_cluster, hyperv_scvmm, smbv3_host, smbv3_cluster, windows, and linux
+* `description` - Description for the Server.  Will automatically start with "ADDED by CHEF: ".  Defaults to "ADDED by CHEF: <host_type> Server"
+* `host_port` - Specifies the Port to use for the Host connection. default: 443
+
+
+#### Examples:
+```ruby
+# Add a new VMware Host
+veeam_host 'vc01.demo.lab' do
+  vbr_server      'veeam.demo.lab'
+  vbr_username    'demo\\veeamuser'
+  vbr_password    'mysecretpassword'
+  host_username  'demo\\administrator'
+  host_password  'myextrapassword'
+  host_type      'vmware'
+  action :add
+end
+```
+```ruby
+# Remove the Server registration
+veeam_proxy 'vc01.demo.lab' do
+  vbr_server      'veeam.demo.lab'
+  vbr_username    'demo\\veeamuser'
+  vbr_password    'mysecretpassword'
+  action :remove
+end
+```
+
 ## Usage
 ### default
 
@@ -584,6 +648,10 @@ Unregisters the Proxy Server and removes the Server registration from the Veeam 
 ### upgrade recipe
 Performs an upgrade of Veeam components to the requested Build level.  For more information, see [Veeam Upgrade Procedures and Details](#Veeam-Upgrade-Procedures-and-Details)
 
+### host_mgmt recipe
+
+Registers or Unregisters the Server provided to the Veeam Backup and Replication Server.
+
 ## Upload to Chef Server
 This cookbook should be included in each organization of your CHEF environment.  When importing, leverage Berkshelf:
 
@@ -606,6 +674,8 @@ _Note: Matchers should always be created in `libraries/matchers.rb` and used for
 * `install_veeam_explorer(resource_name)`
 * `add_veeam_proxy(resource_name)`
 * `remove_veeam_proxy(resource_name)`
+* `add_veeam_host(resource_name)`
+* `remove_veeam_host(resource_name)`
 * `install_veeam_upgrade(resource_name)`
 
 ### Veeam::Helper

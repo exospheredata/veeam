@@ -21,8 +21,7 @@ describe 'veeam::proxy_server' do
   context 'Install Veeam Backup and Recovery Console' do
     platforms = {
       'windows' => {
-        'versions' => %w(2012)
-        # 'versions' => %w(2012 2012R2 2016)
+        'versions' => %w(2012 2012R2 2016)
       }
     }
     platforms.each do |platform, components|

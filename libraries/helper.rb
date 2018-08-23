@@ -62,6 +62,10 @@ module Veeam
         'package_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.iso',
         'package_checksum' => '5020ef015e4d9ff7070d43cf477511a2b562d8044975552fd08f82bdcf556a43'
       }
+      when '9.5.0.1922' then {
+        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.iso',
+        'package_checksum' => '9a6fa7d857396c058b2e65f20968de56f96bc293e0e8fd9f1a848c7d71534134'
+      }
       end
     end
 
@@ -88,7 +92,7 @@ module Veeam
         'update_checksum' => 'af3e3f6db9cb4a711256443894e6fb56da35d48c0b2c32d051960c52c5bc2f00'
       }
       when '9.5.0.823' then {
-        'update_url' => 'https://download.veeam.com/VeeamBackup&Replication_9.5.0.823_Update1.zip',
+        'update_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.0.823_Update1.zip',
         'update_checksum' => 'c07bdfb3b90cc609d21ba94584ba19d8eaba16faa31f74ad80814ec9288df492'
       }
       when '9.5.0.1038' then {
@@ -98,6 +102,10 @@ module Veeam
       when '9.5.0.1536' then {
         'update_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.zip',
         'update_checksum' => '38ed6a30aa271989477684fdfe7b98895affc19df7e1272ee646bb50a059addc'
+      }
+      when '9.5.0.1922' then {
+        'update_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.zip',
+        'update_checksum' => 'f6b3fc0963b09362c535ef49691c51d368266cc91d6833c80c70342161bb7123'
       }
       end
     end

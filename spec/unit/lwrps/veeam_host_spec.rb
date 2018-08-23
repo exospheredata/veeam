@@ -1,12 +1,12 @@
 #
 # Cookbook Name:: veeam
-# Spec:: proxy
+# Spec:: host
 #
 # Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
 
 require 'spec_helper'
 
-describe 'veeam::proxy_remove' do
+describe 'veeam::host_mgmt' do
   before do
     mock_windows_system_framework # Windows Framework Helper from 'spec/windows_helper.rb'
     stub_command('sc.exe query W3SVC').and_return 1
@@ -29,9 +29,16 @@ describe 'veeam::proxy_remove' do
         context "On #{platform} #{version}" do
           before do
             Fauxhai.mock(platform: platform, version: version)
-            node.normal['veeam']['proxy']['vbr_server']   = 'veeam'
-            node.normal['veeam']['proxy']['vbr_username'] = 'admin'
-            node.normal['veeam']['proxy']['vbr_password'] = 'password'
+            allow(Mixlib::ShellOut).to receive(:new).and_return(shellout)
+            node.normal['veeam']['host']['vbr_server']   = 'veeam'
+            node.normal['veeam']['host']['vbr_username'] = 'admin'
+            node.normal['veeam']['host']['vbr_password'] = 'password'
+            node.normal['veeam']['host']['host_username'] = 'admin'
+            node.normal['veeam']['host']['host_password'] = 'password'
+            node.normal['veeam']['build'] = '9.5.0.1536'
+            node.normal['veeam']['host']['server'] = 'vc1'
+            node.normal['veeam']['host']['type']   = 'vmware'
+            node.normal['veeam']['host']['action'] = nil
           end
           let(:shellout) do
             # Creating a double allows us to stub out the response from Mixlib::ShellOut
@@ -53,7 +60,7 @@ describe 'veeam::proxy_remove' do
           end
 
           let(:runner) do
-            ChefSpec::SoloRunner.new(platform: platform, version: version, file_cache_path: '/tmp/cache', step_into: ['veeam_proxy'])
+            ChefSpec::SoloRunner.new(platform: platform, version: version, file_cache_path: '/tmp/cache', step_into: ['veeam_host'])
           end
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
@@ -61,44 +68,41 @@ describe 'veeam::proxy_remove' do
           let(:downloaded_file_name) { win_friendly_path(::File.join(package_save_dir, 'VeeamBackup_Replication_9.5.0.711.iso')) }
 
           it 'converges successfully' do
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(true_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(true_shell)
             expect { chef_run }.not_to raise_error
-            expect(chef_run).to remove_veeam_proxy(node['hostname'])
+            expect(chef_run).to install_veeam_prerequisites('Install Veeam Prerequisites')
+            expect(chef_run).to install_veeam_console('Install Veeam Backup console')
+            expect(chef_run).to install_veeam_upgrade('9.5.0.1536')
+            expect(chef_run).to add_veeam_host(node['veeam']['host']['server'])
           end
-          it 'Step into LWRP - veeam_proxy' do
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(true_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(true_shell)
-            expect { chef_run }.not_to raise_error
-            expect(chef_run).to run_powershell_script('Remove Veeam Proxy')
-            expect(chef_run).to run_powershell_script('Remove Windows Server')
-          end
-          it 'Should not unregister the host if not found in Veeam' do
+          it 'Step into LWRP - veeam_host' do
             allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(false_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(false_shell)
             expect { chef_run }.not_to raise_error
-            expect(chef_run).to_not run_powershell_script('Remove Veeam Proxy')
-            expect(chef_run).to_not run_powershell_script('Remove Windows Server')
+            expect(chef_run).to run_powershell_script('Register Host Server')
+            expect(chef_run).to_not run_powershell_script('Remove Host Server')
           end
-          it 'Should unregister the host but skip the Proxy if not configured' do
+          it 'Should not register the host if already done' do
             allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(true_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(false_shell)
             expect { chef_run }.not_to raise_error
-            expect(chef_run).to_not run_powershell_script('Remove Veeam Proxy')
-            expect(chef_run).to run_powershell_script('Remove Windows Server')
-          end
-          it 'Should remove the Proxy but skip Host if not configured' do
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(false_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(true_shell)
-            expect { chef_run }.not_to raise_error
-            expect(chef_run).to run_powershell_script('Remove Veeam Proxy')
-            expect(chef_run).to_not run_powershell_script('Remove Windows Server')
+            expect(chef_run).to_not run_powershell_script('Register Host Server')
+            expect(chef_run).to_not run_powershell_script('Remove Host Server')
           end
           it 'Should raise an exception if the Veeam Console is not installed' do
             allow_any_instance_of(Chef::Provider)
               .to receive(:is_package_installed?)
               .and_return(false)
             expect { chef_run }.to raise_error(ArgumentError, /This resource requires that the Veeam Backup & Replication Console be installed on this host/)
+          end
+          it 'Should remove Host Server if action set to :remove' do
+            node.normal['veeam']['host']['action'] = 'remove'
+            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(true_shell)
+            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(true_shell)
+            expect { chef_run }.not_to raise_error
+            expect(chef_run).to remove_veeam_host(node['veeam']['host']['server'])
+            expect(chef_run).to run_powershell_script('Remove Host Server')
+          end
+          it 'Should raise an error if action invalid' do
+            node.normal['veeam']['host']['action'] = 'delete'
+            expect { chef_run }.to raise_error(ArgumentError, /Invalid value assigned to attribute \(node\['veeam'\]\['host'\]\['action'\]\): #{node['veeam']['host']['action']}/)
           end
         end
       end
