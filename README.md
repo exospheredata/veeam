@@ -234,6 +234,7 @@ If the automatic upgrade should be skipped then set the following attribute on t
 Ongoing updates are automatically handled by the following included recipes:
 - standalone_complete
 - proxy_server
+- host_mgmt
 - upgrade
 
 

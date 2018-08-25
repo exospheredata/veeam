@@ -1,5 +1,10 @@
 # Change log information for Veeam Cookbook
 
+## Version 2.1.1
+2018-08-25
+
+Minor fix update to include `auto_reboot` override to the Recipe::Proxy and Recipe::HostMgmt
+
 ## Version 2.1
 2018-08-24
 
