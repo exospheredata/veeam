@@ -39,4 +39,12 @@ if defined?(ChefSpec)
     ChefSpec::Matchers::ResourceMatcher.new(:veeam_proxy, :remove, resource_name)
   end
 
+  def add_veeam_host(resource_name)
+    ChefSpec::Matchers::ResourceMatcher.new(:veeam_host, :add, resource_name)
+  end
+
+  def remove_veeam_host(resource_name)
+    ChefSpec::Matchers::ResourceMatcher.new(:veeam_host, :remove, resource_name)
+  end
+
 end

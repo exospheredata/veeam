@@ -1,5 +1,18 @@
 # Change log information for Veeam Cookbook
 
+## Version 2.1
+2018-08-24
+
+Minor update to include default links for downloading Update 3a.  Also added a new resource and recipe to allow for automatic adding of a host to the Server Inventory of Veeam Backup and Replication.
+
+### Included:
+- Updated Helpers to include support for Veeam 9.5.0.1922 (Update 3a)
+- Add resource to control adding new Hosts into Veeam Inventory.
+
+### Information on new resources:
+
+* **VeeamHost** - Registers the provided server as the selected type by connecting to the Veeam Backup and Replication server via the Veeam PowerShell toolkit.  This resource will add a Veeam credential object if one does not exist and then register the server.
+
 ## Version 2.0
 2018-05-04
 
