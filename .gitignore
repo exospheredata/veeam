@@ -14,5 +14,6 @@ bin/*
 
 .kitchen/
 .kitchen.local.yml
+.kitchen.local.*.yml
 
 .delivery/cli.toml

@@ -25,6 +25,7 @@
 # limitations under the License.
 # Windows Helper Method
 #
+require 'chef/util/path_helper'
 def mock_windows_system_framework
   allow_any_instance_of(Chef::Recipe)
     .to receive(:wmi_property_from_query)
@@ -43,6 +44,10 @@ def mock_windows_system_framework
   allow_any_instance_of(Chef::Provider)
     .to receive(:is_package_installed?)
     .and_return(false)
+end
+
+def win_clean_path(path)
+  Chef::Util::PathHelper.cleanpath(path)
 end
 
 def win_friendly_path(path)

@@ -46,8 +46,8 @@ describe 'veeam::server_with_console' do
           end
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
-          let(:package_save_dir) { win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
-          let(:downloaded_file_name) { win_friendly_path(::File.join(package_save_dir, 'VeeamBackup&Replication_9.5.0.711.iso')) }
+          let(:package_save_dir) { win_clean_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
+          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup&Replication_9.5.0.711.iso')) }
 
           it 'converges successfully' do
             expect { chef_run }.not_to raise_error
@@ -62,7 +62,6 @@ describe 'veeam::server_with_console' do
             expect(chef_run).to create_remote_file(downloaded_file_name)
             expect(chef_run).to run_powershell_script('Load Veeam media')
             expect(chef_run).to run_ruby_block('Install Veeam Explorers')
-            expect(chef_run).to delete_file(downloaded_file_name)
           end
           it 'should RAISE an error if Veeam Server not installed' do
             allow_any_instance_of(Chef::Provider).to receive(:is_package_installed?).with('Veeam Backup & Replication Server').and_return(false)

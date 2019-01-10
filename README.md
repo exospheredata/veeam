@@ -182,6 +182,7 @@ The attribute `node['veeam']['version']` is used to evaluate the ISO download pa
 | **9.5.0.1038** | [VeeamBackup&Replication_9.5.0.1038.Update2.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1038.Update2.iso) | 180b142c1092c89001ba840fc97158cc9d3a37d6c7b25c93a311115b33454977 |
 | **9.5.0.1536** | [VeeamBackup&Replication_9.5.0.1536.Update3.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.iso) | 5020ef015e4d9ff7070d43cf477511a2b562d8044975552fd08f82bdcf556a43 |
 | **9.5.0.1922** | [VeeamBackup&Replication_9.5.0.1922.Update3a.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.iso) | 9a6fa7d857396c058b2e65f20968de56f96bc293e0e8fd9f1a848c7d71534134 |
+| **9.5.4.2615** | [VeeamBackup&Replication_9.5.4.2615.Update4.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso) | 8a594cec74059f9929ea765ac5e70a49da6fc93803b567cbb9d74fbb1a49a6cc |
 
 
 ### Veeam Backup and Replication Update Zip files
@@ -193,6 +194,7 @@ The attribute `node['veeam']['build']` is used to evaluate the Zip download path
 | **Update 2** | [VeeamBackup&Replication_9.5.0.1038.Update2.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1038.Update2.zip) | d800bf5414f1bde95fba5fddbd86146c75a5a2414b967404792cc32841cb4ffb |
 | **Update 3** | [VeeamBackup&Replication_9.5.0.1536.Update3.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.zip) | 38ed6a30aa271989477684fdfe7b98895affc19df7e1272ee646bb50a059addc |
 | **Update 3a** | [VeeamBackup&Replication_9.5.0.1922.Update3a.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.zip) | f6b3fc0963b09362c535ef49691c51d368266cc91d6833c80c70342161bb7123 |
+| **Update 4** | [VeeamBackup&Replication_9.5.4.2615.Update4.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso) | 8a594cec74059f9929ea765ac5e70a49da6fc93803b567cbb9d74fbb1a49a6cc |
 
 ### Veeam Backup and Replication License file
 The server must be licensed to unlock the full potential of the application.  The attribute `node['veeam']['server']['evaluation']` should be configured as `false`.  To license, choose one of the below options.
@@ -209,6 +211,8 @@ The server must be licensed to unlock the full potential of the application.  Th
 ## Veeam Upgrade Procedures and Details
 The process to perform upgrades requires that the appropriate installation media is provided which contains the updates from Veeam.  This cookbook will initiate an upgrade if the currently installed versions are less than the desired Build version as defined by the attribute `node['veeam']['build']`.  When the installed version does not match the requested build version, the process will mount the ISO or extract the ZIP that contains the update and then perform an automatic upgrade of each service installed on the host.
 
+> As of Update 4, the upgrade process has changed.  The update to version 9.5.4+ will be automatically applied if the installer media leverages Update4.  Due to the nature of the process, a reboot is required.  The Automatic Reboot will occur at the end of the convergance unless the attribute `nde['veeam']['reboot_on_upgrade']` equals false
+
 ### Configuring the Updates
 Updates are identified by passing one of the following to the attributes for the server:
 1. `node['veeam']['installer']['update_url']` attribute should contain either the full installation ISO or the update ZIP link.  The file name must include the full build name like such:
@@ -221,6 +225,8 @@ Updates are identified by passing one of the following to the attributes for the
     - 9.5.0.711 (GA)
     - 9.5.0.1038 (Update2)
     - 9.5.0.1536 (Update3)
+    - 9.5.0.1922 (Update3a)
+    - 9.5.4.2615 (Update4)
 
 ### Upgrade Process and Warnings
 *Warning*
@@ -231,7 +237,13 @@ If the automatic upgrade should be skipped then set the following attribute on t
 - `node['veeam']['reboot_on_upgrade']` = false
 
 ### Recipes that perform automatic upgrades
+> As of Update 4, the upgrade process has changed.  The update to version 9.5.4+ will be automatically applied if the installer media leverages Update4.  Due to the nature of the process, a reboot is required.  The Automatic Reboot will occur at the end of the convergance unless the attribute `nde['veeam']['reboot_on_upgrade']` equals false
+
 Ongoing updates are automatically handled by the following included recipes:
+- catalog
+- console
+- server_with_catalog
+- server_with_console
 - standalone_complete
 - proxy_server
 - host_mgmt

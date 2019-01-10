@@ -49,24 +49,27 @@ action :install do
   # Halt this process now.  There is no URL for the package.
   raise ArgumentError, 'You must provide a package URL or choose a valid version' unless new_resource.package_url
 
-  # Determine if all of the Veeam pre-requisites are installed and if so, then skip the processing.
-  prerequisites_required  = []
-  installed_prerequisites = []
-  prerequisites_hash      = prerequisites_list(new_resource.version)
+  base_version = /(\d+.\d+)/.match(new_resource.version).captures[0]
+  [base_version, new_resource.version].each do |test_version|
+    # Determine if all of the Veeam pre-requisites are installed and if so, then skip the processing.
+    prerequisites_required  = []
+    installed_prerequisites = []
+    prerequisites_hash      = prerequisites_list(test_version)
 
-  prerequisites_hash.each do |item, prerequisites|
-    package_name = prerequisites.map { |k, _v| k }.join(',')
-    unless item == 'SQL' && new_resource.install_sql == false
-      prerequisites_required.push(package_name)
-      installed_prerequisites.push(package_name) if is_package_installed?(package_name)
+    prerequisites_hash.each do |item, prerequisites|
+      package_name = prerequisites.map { |k, _v| k }.join(',')
+      unless item == 'SQL' && new_resource.install_sql == false
+        prerequisites_required.push(package_name)
+        installed_prerequisites.push(package_name) if is_package_installed?(package_name)
+      end
     end
+
+    # Compare the required Prerequisites with those installed.  If all are installed, then
+    # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
+    return false if (prerequisites_required - installed_prerequisites).empty? && find_current_dotnet >= 379893
   end
 
-  # Compare the required Prerequisites with those installed.  If all are installed, then
-  # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
-  return false if (prerequisites_required - installed_prerequisites).empty? && find_current_dotnet >= 379893
-
-  package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
+  package_save_dir = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
   # This will only create the directory if it does not exist which is likely the case if we have
   # never performed a remote_file install.
@@ -80,7 +83,7 @@ action :install do
 
   Chef::Log.debug('Downloading Veeam Backup and Recovery software via URL')
   package_name = new_resource.package_url.split('/').last
-  installer_file_name = win_friendly_path(::File.join(package_save_dir, package_name))
+  installer_file_name = win_clean_path(::File.join(package_save_dir, package_name))
   iso_installer(installer_file_name, new_resource)
 
   install_dotnet(installer_file_name)
@@ -153,9 +156,9 @@ action_class do
   def install_sql_express(downloaded_file_name)
     installed_version_reg_key = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\\MSSQL11.SQLEXPRESS\MSSQLServer\CurrentVersion'
     return 'Already Installed' if registry_key_exists?(installed_version_reg_key, :machine)
-    config_file_path = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'ConfigurationFile.ini'))
-    output_file      = win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'sql_install.log'))
-    sql_build_script = win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'sql_build_script.ps1'))
+    config_file_path = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'ConfigurationFile.ini'))
+    output_file      = win_clean_path(::File.join(Chef::Config[:file_cache_path], 'sql_install.log'))
+    sql_build_script = win_clean_path(::File.join(Chef::Config[:file_cache_path], 'sql_build_script.ps1'))
 
     sql_sys_admin_list = "NT AUTHORITY\\SYSTEM\" \"#{node['hostname']}\\#{ENV['USERNAME']}"
     sql_sys_admin_list = node['veeam']['server']['vbr_service_user'] if node['veeam']['server']['vbr_service_user']
@@ -173,14 +176,13 @@ action_class do
     ruby_block 'Install the SQL Express' do
       block do
         install_media_path = get_media_installer_location(downloaded_file_name)
-        sql_installer      = "#{install_media_path}\\Redistr\\x64\\SQLEXPR_x64_ENU.exe"
-
         template sql_build_script do
           backup false
           sensitive true
           source ::File.join('sql_server', 'sql_build_script.ps1.erb')
           variables(
-            sql_build_command: "#{sql_installer} /q /ConfigurationFile=#{config_file_path}",
+            sql_install_media: "#{install_media_path}\\Redistr\\x64",
+            sql_build_command: "/q /ConfigurationFile=#{config_file_path}",
             outputFilePath: output_file
           )
           action :create

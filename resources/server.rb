@@ -53,6 +53,7 @@ property :pf_ad_nfsdatastore, String
 
 property :version, String, required: true
 property :keep_media, [TrueClass, FalseClass], default: false
+property :auto_reboot, [TrueClass, FalseClass], default: true
 
 # We need to include the windows helpers to keep things dry
 ::Chef::Provider.send(:include, Windows::Helper)
@@ -63,7 +64,18 @@ action :install do
 
   # We will use the Windows Helper 'is_package_installed?' to see if the Server is installed.  If it is installed, then
   # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
-  return false if is_package_installed?('Veeam Backup & Replication Server')
+  if is_package_installed?('Veeam Backup & Replication Server')
+    installed_version = installed_packages['Veeam Backup & Replication Server'][:version]
+
+    # => If the build version and the installed version match then return up-to-date
+    return false if Gem::Version.new(new_resource.version) == Gem::Version.new(installed_version)
+
+    # => Previous versions are upgraded through update files and therefore, this is up-to-date
+    return false if Gem::Version.new(new_resource.version) <= Gem::Version.new('9.5.3.0')
+
+    # => An Upgrade is available and should be started
+    Chef::Log.info('New Server Upgrade is available')
+  end
 
   # We need to verify that .NET Framework 4.5.2 or higher has been installed on the machine
   raise 'The Veeam Backup and Replication Server requires that Microsoft .NET Framework 4.5.2 or higher be installed.  Please install the Veeam pre-requisites' if find_current_dotnet < 379893
@@ -71,7 +83,7 @@ action :install do
   raise ArgumentError, 'The Veeam Backup and Replication EULA must be accepted.  Please set the node attribute [\'veeam\'][\'server\'][\'accept_eula\'] to \'true\' ' unless new_resource.accept_eula == true
   raise ArgumentError, 'The VBR service password must be set if a username is supplied' if new_resource.vbr_service_user && new_resource.vbr_service_password.nil?
 
-  package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
+  package_save_dir = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
   # This will only create the directory if it does not exist which is likely the case if we have
   # never performed a remote_file install.
@@ -96,7 +108,7 @@ action :install do
 
   Chef::Log.debug('Downloading Veeam Backup and Replication software via URL')
   package_name = new_resource.package_url.split('/').last
-  installer_file_name = win_friendly_path(::File.join(package_save_dir, package_name))
+  installer_file_name = win_clean_path(::File.join(package_save_dir, package_name))
   iso_installer(installer_file_name, new_resource)
 
   new_resource.vbr_license_file = find_vbr_license unless new_resource.evaluation
@@ -130,7 +142,7 @@ action_class do
   end
 
   def find_vbr_license
-    license_file = win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'Veeam-license-file.lic'))
+    license_file = win_clean_path(::File.join(Chef::Config[:file_cache_path], 'Veeam-license-file.lic'))
 
     if node['veeam']['license_url']
       remote_file license_file do
@@ -184,16 +196,29 @@ action_class do
     xtra_arguments.concat(" VBR_SQLSERVER_USERNAME=\"#{new_resource.vbr_sqlserver_username}\" ") unless new_resource.vbr_sqlserver_username.nil?
     xtra_arguments.concat(" VBR_SQLSERVER_PASSWORD=\"#{new_resource.vbr_sqlserver_password}\" ") unless new_resource.vbr_sqlserver_password.nil?
     xtra_arguments.concat(" PF_AD_NFSDATASTORE=\"#{new_resource.pf_ad_nfsdatastore}\" ") unless new_resource.pf_ad_nfsdatastore.nil?
+    xtra_arguments.concat(' ACCEPT_THIRDPARTY_LICENSES="1" ')
 
     cmd_str = <<-EOH
       $veeam_backup_server_installer = ( "#{install_media_path}\\Backup\\Server.x64.msi")
       Write-Host (' /qn /i ' + $veeam_backup_server_installer + ' #{xtra_arguments}')
-      $output = (Start-Process -FilePath "msiexec.exe" -ArgumentList $(' /qn /i ' + $veeam_backup_server_installer + ' #{xtra_arguments}') -Wait -Passthru -ErrorAction Stop)
-      if ( $output.ExitCode -ne 0){
-        throw ("The install failed with ExitCode [{0}].  The package is {1}" -f $output.ExitCode, $veeam_backup_server_installer )
-      }
+      $log_file = "veeam_installer.log"
+      $output = (Start-Process -FilePath "msiexec.exe" -ArgumentList $(' /qn /norestart /i ' + $veeam_backup_server_installer + ' #{xtra_arguments} /log #{::Chef::Config[:file_cache_path]}\\' + $log_file) -Wait -Passthru -ErrorAction Stop)
+      switch ( $output.ExitCode){
+          0 { Write-Host "Veeam Install Completed Successfully" }
+          1641 { Write-Host "Need Reboot"}
+          3010 { Write-Host "Need Reboot"}
+          default {
+            throw ("The updates failed with ExitCode [{0}].  The package is {1}" -f $output.ExitCode, $veeam_backup_server_installer )
+          }
+        }
     EOH
     validate_powershell_out(cmd_str)
     Chef::Log.debug 'Installing Veeam Backup server service... success'
+
+    reboot 'Required Reboot after Veeam Installation or Upgrade' do
+      action :request_reboot
+      only_if { reboot_pending? }
+      only_if { new_resource.auto_reboot }
+    end
   end
 end

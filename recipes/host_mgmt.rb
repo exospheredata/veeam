@@ -18,7 +18,7 @@ raise ArgumentError, error_message if node['platform_version'].to_f < '6.2.9200'
 veeam_prerequisites 'Install Veeam Prerequisites' do
   package_url node['veeam']['installer']['package_url']
   package_checksum node['veeam']['installer']['package_checksum']
-  version node['veeam']['version']
+  version node['veeam']['build']
   install_sql false
   action :install
 end
@@ -26,7 +26,7 @@ end
 veeam_console 'Install Veeam Backup console' do
   package_url node['veeam']['installer']['package_url']
   package_checksum node['veeam']['installer']['package_checksum']
-  version node['veeam']['version']
+  version node['veeam']['build']
   accept_eula node['veeam']['console']['accept_eula']
   install_dir node['veeam']['console']['install_dir']
   keep_media true

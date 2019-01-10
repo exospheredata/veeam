@@ -1,3 +1,4 @@
+
 # Cookbook Name:: veeam
 # Resource:: console
 #
@@ -44,7 +45,18 @@ action :install do
 
   # We will use the Windows Helper 'is_package_installed?' to see if the Console is installed.  If it is installed, then
   # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
-  return false if is_package_installed?('Veeam Backup & Replication Console')
+  if is_package_installed?('Veeam Backup & Replication Console')
+    installed_version = installed_packages['Veeam Backup & Replication Console'][:version]
+
+    # => If the build version and the installed version match then return up-to-date
+    return false if Gem::Version.new(new_resource.version) == Gem::Version.new(installed_version)
+
+    # => Previous versions are upgraded through update files and therefore, this is up-to-date
+    return false if Gem::Version.new(new_resource.version) <= Gem::Version.new('9.5.3.0')
+
+    # => An Upgrade is available and should be started
+    Chef::Log.info('New Console Upgrade is available')
+  end
 
   # We need to verify that .NET Framework 4.5.2 or higher has been installed on the machine
   raise 'The Veeam Backup and Recovery Server requires that Microsoft .NET Framework 4.5.2 or higher be installed.  Please install the Veeam pre-requisites' if find_current_dotnet < 379893
@@ -52,7 +64,7 @@ action :install do
   # The EULA must be explicitly accepted.
   raise ArgumentError, 'The Veeam Backup and Recovery EULA must be accepted.  Please set the node attribute [\'veeam\'][\'console\'][\'accept_eula\'] to \'true\' ' if new_resource.accept_eula.nil? || new_resource.accept_eula == false
 
-  package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
+  package_save_dir = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
   # This will only create the directory if it does not exist which is likely the case if we have
   # never performed a remote_file install.
@@ -77,7 +89,7 @@ action :install do
 
   Chef::Log.debug('Downloading Veeam Backup and Recovery software via URL')
   package_name = new_resource.package_url.split('/').last
-  installer_file_name = win_friendly_path(::File.join(package_save_dir, package_name))
+  installer_file_name = win_clean_path(::File.join(package_save_dir, package_name))
   iso_installer(installer_file_name, new_resource)
 
   ruby_block 'Install the Backup console application' do
@@ -118,6 +130,7 @@ action_class do
     xtra_arguments = ''
     xtra_arguments.concat(" ACCEPTEULA=\"#{new_resource.accept_eula ? 'YES' : 'NO'}\" ") unless new_resource.accept_eula.nil?
     xtra_arguments.concat(" INSTALLDIR=\"#{new_resource.install_dir} \" ") unless new_resource.install_dir.nil?
+    xtra_arguments.concat(' ACCEPT_THIRDPARTY_LICENSES="1" ')
 
     cmd_str = <<-EOH
       $veeam_backup_console_installer = ( "#{install_media_path}\\Backup\\Shell.x64.msi")
