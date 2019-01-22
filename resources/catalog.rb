@@ -47,14 +47,25 @@ action :install do
 
   # We will use the Windows Helper 'is_package_installed?' to see if the Catalog Server is installed.  If it is installed, then
   # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
-  return false if is_package_installed?('Veeam Backup Catalog')
+  if is_package_installed?('Veeam Backup Catalog')
+    installed_version = installed_packages['Veeam Backup Catalog'][:version]
+
+    # => If the build version and the installed version match then return up-to-date
+    return false if Gem::Version.new(new_resource.version) == Gem::Version.new(installed_version)
+
+    # => Previous versions are upgraded through update files and therefore, this is up-to-date
+    return false if Gem::Version.new(new_resource.version) <= Gem::Version.new('9.5.3.0')
+
+    # => An Upgrade is available and should be started
+    Chef::Log.info('New Catalog Upgrade is available')
+  end
 
   # We need to verify that .NET Framework 4.5.2 or higher has been installed on the machine
   raise 'The Veeam Backup and Recovery Server requires that Microsoft .NET Framework 4.5.2 or higher be installed.  Please install the Veeam pre-requisites' if find_current_dotnet < 379893
 
   raise ArgumentError, 'The VBRC service password must be set if a username is supplied' if new_resource.vbrc_service_user && new_resource.vbrc_service_password.nil?
 
-  package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
+  package_save_dir = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
   # This will only create the directory if it does not exist which is likely the case if we have
   # never performed a remote_file install.
@@ -79,7 +90,7 @@ action :install do
 
   Chef::Log.debug('Downloading Veeam Backup and Recovery software via URL')
   package_name = new_resource.package_url.split('/').last
-  installer_file_name = win_friendly_path(::File.join(package_save_dir, package_name))
+  installer_file_name = win_clean_path(::File.join(package_save_dir, package_name))
   iso_installer(installer_file_name, new_resource)
 
   ruby_block 'Install the Backup Catalog application' do
@@ -123,6 +134,7 @@ action_class do
     xtra_arguments.concat(" VBRC_SERVICE_USER=\"#{new_resource.vbrc_service_user}\" ") unless new_resource.vbrc_service_user.nil?
     xtra_arguments.concat(" VBRC_SERVICE_PASSWORD=\"#{new_resource.vbrc_service_password}\" ") unless new_resource.vbrc_service_password.nil?
     xtra_arguments.concat(" VBRC_SERVICE_PORT=\"#{new_resource.vbrc_service_port}\" ") unless new_resource.vbrc_service_port.nil?
+    xtra_arguments.concat(' ACCEPT_THIRDPARTY_LICENSES="1" ')
 
     cmd_str = <<-EOH
       $veeam_backup_catalog_installer = ( "#{install_media_path}\\Catalog\\VeeamBackupCatalog64.msi")

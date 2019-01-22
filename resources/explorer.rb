@@ -57,17 +57,26 @@ action :install do
 
   # Determine if all of the Veeam Explorers are installed and if so, then skip the processing.
   installed_explorers = []
-  explorers_list = explorers_list(new_resource.version)
+  explorers_hash = explorers_list(new_resource.version)
 
   new_resource.explorers.each do |explorer|
-    installed_explorers.push(explorer) if is_package_installed?(explorers_list[explorer])
+    package_name = explorers_hash[explorer][:name]
+    package_version = explorers_hash[explorer][:version]
+    next unless is_package_installed?(package_name)
+    installed_version = installed_packages[package_name][:version]
+    if installed_version == package_version
+      installed_explorers.push(explorer)
+    else
+      Chef::Log.info("The package #{package_name} is installed with version #{installed_version} but should be upgraded to #{package_version}")
+    end
   end
 
+  # return false
   # Compare the required Explorers with those installed.  If all are installed, then
   # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
   return false if (new_resource.explorers - installed_explorers).empty?
 
-  package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
+  package_save_dir = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
   # This will only create the directory if it does not exist which is likely the case if we have
   # never performed a remote_file install.
@@ -81,7 +90,7 @@ action :install do
 
   Chef::Log.debug('Downloading Veeam Backup and Replication software via URL')
   package_name = new_resource.package_url.split('/').last
-  installer_file_name = win_friendly_path(::File.join(package_save_dir, package_name))
+  installer_file_name = win_clean_path(::File.join(package_save_dir, package_name))
   iso_installer(installer_file_name, new_resource)
 
   # We need to delay the evaluation of this so that we can properly get the value during run time.
@@ -91,14 +100,15 @@ action :install do
       veeam_explorer_root = "#{install_media_path}\\Explorers"
 
       new_resource.explorers.each do |explorer|
-        Chef::Log.debug "Installing Veeam Explorer for #{explorers_list[explorer]}... begin"
-        windows_package explorers_list[explorer] do
+        Chef::Log.debug "Installing Veeam Explorer for #{explorers_hash[explorer][:name]}... begin"
+        windows_package explorers_hash[explorer][:name] do
           provider       Chef::Provider::Package::Windows
           source         "#{veeam_explorer_root}\\VeeamExplorerFor#{explorer}.msi"
+          options        'ACCEPT_THIRDPARTY_LICENSES="1" ACCEPT_EULA="1"'
           installer_type :msi
           action         :install
         end
-        Chef::Log.debug "Installing Veeam Explorer for #{explorers_list[explorer]}... success"
+        Chef::Log.debug "Installing Veeam Explorer for #{explorers_hash[explorer][:name]}... success"
       end
     end
   end

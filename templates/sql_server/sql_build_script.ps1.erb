@@ -1,6 +1,13 @@
 # Install SQL Server
 
-<%= @sql_build_command %> | Out-File <%= @outputFilePath %>
+if (Test-Path -Path <%= @sql_install_media %>\SQLEXPR_x64_ENU.exe){
+    $installer_path = "<%= @sql_install_media %>\SQLEXPR_x64_ENU.exe"
+} else {
+    $installer_path = "<%= @sql_install_media %>\SqlExpress\2016SP1\SQLEXPR_x64_ENU.exe"
+}
+
+& $installer_path <%= @sql_build_command %> | Out-File <%= @outputFilePath %>
+
 
 $results = @{}
 $results.Add('output','Successfully installed SQL Server')

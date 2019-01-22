@@ -22,6 +22,7 @@
 # limitations under the License.
 
 require 'chef/mixin/shell_out'
+require 'chef/util/path_helper'
 
 module Veeam
   module Helper
@@ -66,6 +67,10 @@ module Veeam
         'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.iso',
         'package_checksum' => '9a6fa7d857396c058b2e65f20968de56f96bc293e0e8fd9f1a848c7d71534134'
       }
+      when '9.5.4.2615' then {
+        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso',
+        'package_checksum' => 'ecc27bbcf49104861566782701dca42375b324b4710e2fa79b5f8068c31c4494'
+      }
       end
     end
 
@@ -107,6 +112,10 @@ module Veeam
         'update_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.zip',
         'update_checksum' => 'f6b3fc0963b09362c535ef49691c51d368266cc91d6833c80c70342161bb7123'
       }
+      when '9.5.4.2615' then {
+        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso',
+        'package_checksum' => 'ecc27bbcf49104861566782701dca42375b324b4710e2fa79b5f8068c31c4494'
+      }
       end
     end
 
@@ -117,10 +126,25 @@ module Veeam
         '1' => { 'Microsoft SQL Server 2012 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
         'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
       }
+      when /9.0.0.\d+/ then {
+        '0' => { 'Microsoft System CLR Types for SQL Server 2012 (x64)' => 'SQLSysClrTypes.msi' },
+        '1' => { 'Microsoft SQL Server 2012 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
+        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+      }
       when '9.5' then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
         'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+      }
+      when /9.5.0.\d+/ then {
+        '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
+        '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
+        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+      }
+      when /9.5.4.\d+/ then {
+        '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
+        '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
+        'SQL' => { 'Microsoft SQL Server 2016 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
       }
       end
     end
@@ -135,11 +159,25 @@ module Veeam
         'Oracle' => 'Veeam Explorer for Oracle'
       }
       when '9.5' then {
-        'ActiveDirectory' => 'Veeam Explorer for Microsoft Active Directory',
-        'SQL' => 'Veeam Explorer for Microsoft SQL Server',
-        'Exchange' => 'Veeam Explorer for Microsoft Exchange',
-        'SharePoint' => 'Veeam Explorer for Microsoft SharePoint',
-        'Oracle' => 'Veeam Explorer for Oracle'
+        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '9.5.0.836' },
+        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '9.5.0.836' },
+        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '9.5.0.836' },
+        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '9.5.0.836' },
+        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '9.5.0.836' }
+      }
+      when /9.5.4.\d+/ then {
+        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '9.6.4.1053' },
+        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '9.6.4.1053' },
+        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '9.6.4.1053' },
+        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '9.6.4.1053' },
+        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '9.6.4.1053' }
+      }
+      when /9.5.0.\d+/ then {
+        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '9.5.0.836' },
+        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '9.5.0.836' },
+        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '9.5.0.836' },
+        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '9.5.0.836' },
+        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '9.5.0.836' }
       }
       end
     end
@@ -155,12 +193,12 @@ module Veeam
       installed_version.nil? ? 0 : installed_version
     end
 
-    def validate_powershell_out(script, timeout: nil)
+    def validate_powershell_out(script, timeout: nil, ignore_errors: false)
       # This seemed like the DRYest way to handle the output handling from PowerShell.
       cmd = powershell_out(script) if timeout.nil?
       cmd = powershell_out(script, timeout: timeout) unless timeout.nil?
       # Only return the output if there were no errors.
-      return cmd.stdout.chomp if cmd.stderr == '' || cmd.stderr.nil?
+      return cmd.stdout.chomp if cmd.stderr == '' || cmd.stderr.nil? || ignore_errors
       raise cmd.inspect if cmd.stderr != ''
     end
 
@@ -192,7 +230,7 @@ module Veeam
                   when /Console/
                     "#{veeam_package}\\Console\\veeam.backup.shell.exe"
                   when /Server/
-                    "#{veeam_package}\\Packages\\VeeamDeploymentDll.dll"
+                    "#{veeam_package}\\Backup\\Packages\\VeeamDeploymentDll.dll"
                   when /Catalog/
                     "#{veeam_package}\\Backup Catalog\\VeeamDeploymentDll.dll"
                   else
@@ -202,7 +240,7 @@ module Veeam
         $File = Get-Item -Path '#{veeam_exe}'
         $File.VersionInfo.ProductVersion
       EOH
-      output = validate_powershell_out(cmd_str)
+      output = validate_powershell_out(cmd_str, ignore_errors: true)
       output = nil if output == ''
       output
     end
@@ -227,10 +265,10 @@ module Veeam
     end
 
     def extract_installer(downloaded_file_name, new_resource)
-      package_name = downloaded_file_name.split('\\').last
+      package_name = downloaded_file_name.split('/').last
       package_type = ::File.extname(package_name)
-      install_media_path = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], "Veeam/#{package_name.gsub(package_type, '')}"))
-      update_path = win_friendly_path(::File.join(install_media_path, '/Updates'))
+      install_media_path = win_clean_path(::File.join(::Chef::Config[:file_cache_path], "Veeam/#{package_name.gsub(package_type, '')}"))
+      update_path = win_clean_path(::File.join(install_media_path, '/Updates'))
 
       remote_file downloaded_file_name do
         source new_resource.package_url
@@ -240,7 +278,7 @@ module Veeam
         not_if { ::File.exist?(update_path) }
       end
 
-      windows_zipfile win_friendly_path(::File.join(install_media_path, '/Updates')) do
+      windows_zipfile win_clean_path(::File.join(install_media_path, '/Updates')) do
         source downloaded_file_name
         action :unzip
         not_if { ::File.exist?(update_path) }
@@ -274,6 +312,10 @@ module Veeam
       raise ArgumentError, 'Unable to find the Veeam installation media' unless output
       Chef::Log.debug "Found the Veeam installation media at Drive Letter [#{output}]"
       output
+    end
+
+    def win_clean_path(path)
+      Chef::Util::PathHelper.cleanpath(path)
     end
   end
 end

@@ -30,8 +30,8 @@ describe 'veeam::server' do
           end
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
-          let(:package_save_dir) { win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
-          let(:downloaded_file_name) { win_friendly_path(::File.join(package_save_dir, 'VeeamBackup&Replication_9.5.0.711.iso')) }
+          let(:package_save_dir) { win_clean_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
+          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup&Replication_9.5.0.711.iso')) }
 
           it 'converges successfully' do
             expect(chef_run).to install_veeam_prerequisites('Install Veeam Prerequisites')
@@ -44,11 +44,11 @@ describe 'veeam::server' do
             expect(chef_run).to run_powershell_script('Load Veeam media')
             expect(chef_run).to run_ruby_block('Install the .NET 4.5.2')
             expect(chef_run).to run_ruby_block('Install the SQL Management Tools')
-            expect(chef_run).to create_template(win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'ConfigurationFile.ini')))
+            expect(chef_run).to create_template(win_clean_path(::File.join(Chef::Config[:file_cache_path], 'ConfigurationFile.ini')))
             expect(chef_run).to run_ruby_block('Install the SQL Express')
             expect(chef_run).to run_ruby_block('Check SQL Install State')
-            expect(chef_run).to delete_file(win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'ConfigurationFile.ini')))
-            expect(chef_run).to delete_file(win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'sql_build_script.ps1')))
+            expect(chef_run).to delete_file(win_clean_path(::File.join(Chef::Config[:file_cache_path], 'ConfigurationFile.ini')))
+            expect(chef_run).to delete_file(win_clean_path(::File.join(Chef::Config[:file_cache_path], 'sql_build_script.ps1')))
             expect(chef_run).to delete_windows_task('Remove SQL Install Task')
 
             reboot_handler = chef_run.reboot('DotNet Install Complete')

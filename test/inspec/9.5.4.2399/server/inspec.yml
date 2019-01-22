@@ -1,0 +1,8 @@
+name: backup_server
+title: Veeam Backup and Recovery Server
+maintainer: 'Exosphere Data, LLC'
+copyright: 'Exosphere Data, LLC'
+copyright_email: chef@exospheredata.com
+license: All Rights Reserved
+summary: An InSpec Compliance Profile for Veeam Backup and Recovery Server
+version: 0.1.0

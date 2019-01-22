@@ -22,9 +22,17 @@ end
 veeam_console 'Install Veeam Backup console' do
   package_url node['veeam']['installer']['package_url']
   package_checksum node['veeam']['installer']['package_checksum']
-  version node['veeam']['version']
+  version node['veeam']['build']
   accept_eula node['veeam']['console']['accept_eula']
   install_dir node['veeam']['console']['install_dir']
   keep_media node['veeam']['console']['keep_media']
+  action :install
+end
+
+veeam_upgrade node['veeam']['build'] do
+  package_url node['veeam']['installer']['update_url']
+  package_checksum node['veeam']['installer']['update_checksum']
+  keep_media node['veeam']['upgrade']['keep_media']
+  auto_reboot node['veeam']['reboot_on_upgrade']
   action :install
 end

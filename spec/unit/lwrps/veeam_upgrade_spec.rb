@@ -15,7 +15,7 @@ describe 'veeam::upgrade' do
   context 'Install Veeam Backup and Recovery Console' do
     platforms = {
       'windows' => {
-        'versions' => %w(2012) # 2012R2 2016)
+        'versions' => %w(2012 2012R2 2016)
       }
     }
     platforms.each do |platform, components|
@@ -38,8 +38,8 @@ describe 'veeam::upgrade' do
           end
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
-          let(:package_save_dir) { win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
-          let(:downloaded_file_name) { win_friendly_path(::File.join(package_save_dir, 'VeeamBackup_Replication_9.5.0.1536.Update3.iso')) }
+          let(:package_save_dir) { win_clean_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
+          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup_Replication_9.5.0.1536.Update3.iso')) }
 
           it 'converges successfully' do
             expect { chef_run }.not_to raise_error
@@ -68,8 +68,8 @@ describe 'veeam::upgrade' do
           end
           it 'should extract the media from a zip' do
             node.normal['veeam']['installer']['update_url'] = 'http://download/VeeamBackup&Replication_9.5.0.1536.Update3.zip'
-            downloaded_file_name = win_friendly_path(::File.join(package_save_dir, 'VeeamBackup_Replication_9.5.0.1536.Update3.zip'))
-            installer_path = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'Veeam/VeeamBackup_Replication_9.5.0.1536.Update3/Updates'))
+            downloaded_file_name = win_clean_path(::File.join(package_save_dir, 'VeeamBackup_Replication_9.5.0.1536.Update3.zip'))
+            installer_path = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'Veeam/VeeamBackup_Replication_9.5.0.1536.Update3/Updates'))
             expect(chef_run).to create_remote_file(downloaded_file_name)
             expect(chef_run).to unzip_windows_zipfile(installer_path)
             expect(chef_run).to delete_file(downloaded_file_name)

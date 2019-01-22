@@ -15,25 +15,15 @@ raise ArgumentError, error_message if node['platform_version'].to_f < '6.2.9200'
 veeam_prerequisites 'Install Veeam Prerequisites' do
   package_url node['veeam']['installer']['package_url']
   package_checksum node['veeam']['installer']['package_checksum']
-  version node['veeam']['version']
+  version node['veeam']['build']
   install_sql true
-  action :install
-end
-
-veeam_console 'Install Veeam Backup Console' do
-  package_url node['veeam']['installer']['package_url']
-  package_checksum node['veeam']['installer']['package_checksum']
-  version node['veeam']['version']
-  accept_eula node['veeam']['console']['accept_eula']
-  install_dir node['veeam']['console']['install_dir']
-  keep_media true
   action :install
 end
 
 veeam_server 'Install Veeam Backup Server' do
   package_url node['veeam']['installer']['package_url']
   package_checksum node['veeam']['installer']['package_checksum']
-  version node['veeam']['version']
+  version node['veeam']['build']
   accept_eula node['veeam']['server']['accept_eula']
   evaluation node['veeam']['server']['evaluation']
   install_dir node['veeam']['server']['install_dir']
@@ -44,11 +34,29 @@ veeam_server 'Install Veeam Backup Server' do
   action :install
 end
 
+veeam_console 'Install Veeam Backup Console' do
+  package_url node['veeam']['installer']['package_url']
+  package_checksum node['veeam']['installer']['package_checksum']
+  version node['veeam']['build']
+  accept_eula node['veeam']['console']['accept_eula']
+  install_dir node['veeam']['console']['install_dir']
+  keep_media true
+  action :install
+end
+
 veeam_explorer 'Install Veeam Backup Explorers' do
   package_url node['veeam']['installer']['package_url']
   package_checksum node['veeam']['installer']['package_checksum']
-  version node['veeam']['version']
+  version node['veeam']['build']
   explorers node['veeam']['server']['explorers']
-  keep_media node['veeam']['console']['keep_media'] || node['veeam']['server']['keep_media']
+  keep_media true
+  action :install
+end
+
+veeam_upgrade node['veeam']['build'] do
+  package_url node['veeam']['installer']['update_url']
+  package_checksum node['veeam']['installer']['update_checksum']
+  keep_media node['veeam']['upgrade']['keep_media'] || node['veeam']['console']['keep_media'] || node['veeam']['server']['keep_media']
+  auto_reboot node['veeam']['reboot_on_upgrade']
   action :install
 end

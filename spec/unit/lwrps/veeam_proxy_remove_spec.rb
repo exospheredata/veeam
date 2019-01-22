@@ -57,8 +57,8 @@ describe 'veeam::proxy_remove' do
           end
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
-          let(:package_save_dir) { win_friendly_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
-          let(:downloaded_file_name) { win_friendly_path(::File.join(package_save_dir, 'VeeamBackup_Replication_9.5.0.711.iso')) }
+          let(:package_save_dir) { win_clean_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
+          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup_Replication_9.5.0.711.iso')) }
 
           it 'converges successfully' do
             allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(true_shell)

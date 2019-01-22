@@ -10,7 +10,7 @@ driver:
 provisioner:
   name: chef_zero
   data_bags_path: "../../data_bags/"
-  # You many wish to test your CHEF::Log.<level> messages while using test-kitche.  Change the below
+  # You many wish to test your CHEF::Log.<level> messages while using test-kitchen.  Change the below
   # value to the level of choice.  For cleaner output, comment this option out.
   log_level: info
   # You may wish to disable always updating cookbooks in CI or other testing environments.

@@ -63,7 +63,7 @@ action :install do
   # => We need to determine the actual build of installed Veeam Software.  Since there are three main packages
   # => we will need to iterate through their possible locations.
   current_build = nil
-  ['Veeam Backup & Replication Console', 'Veeam Backup & Replication Server', 'Veeam Backup & Replication Catalog'].each do |package|
+  ['Veeam Backup & Replication Console', 'Veeam Backup & Replication Server', 'Veeam Backup Catalog'].each do |package|
     current_build = find_current_veeam_version(package)
     break unless current_build.nil?
   end
@@ -79,7 +79,7 @@ action :install do
     # We need to verify that .NET Framework 4.5.2 or higher has been installed on the machine
     raise 'The Veeam Backup and Replication Server requires that Microsoft .NET Framework 4.5.2 or higher be installed.  Please install the Veeam pre-requisites' if find_current_dotnet < 379893
 
-    package_save_dir = win_friendly_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
+    package_save_dir = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
     # This will only create the directory if it does not exist which is likely the case if we have
     # never performed a remote_file install.
@@ -97,7 +97,7 @@ action :install do
       package_name = package_name.gsub(special_char, '_')
     end
     package_type = ::File.extname(package_name)
-    installer_file_name = win_friendly_path(::File.join(package_save_dir, package_name))
+    installer_file_name = win_clean_path(::File.join(package_save_dir, package_name))
 
     install_media_path = if package_type == '.iso'
                            iso_installer(installer_file_name, new_resource)
