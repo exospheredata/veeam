@@ -5,6 +5,37 @@
 
 Minor fix update to include `delay_min 1` to all reboot resources to cover a chef bug that lets some test-kitchen environments crash.
 
+## Version 3.0.0
+2019-01-22
+UPDATE: Kitchen.yml typo
+UPDATE: Libraries::Helper to enhance prerequisites versions
+UPDATE: Libraries::Helper to include support to ignore_errors in validate_cmd method when called from method find_current_veeam_version
+UPDATE: Libraries::Helper to include version information for explorers and win_clean_path helper
+UPDATE: Libraries::Helper to include links for 9.5.4
+
+UPDATE: Recipes::Catalog to include calling veeam_upgrade by default
+UPDATE: Recipes::Console to include veaam_upgrade
+UPDATE: Recipes::HostMgmt to support 9.5.4
+ADD: Recipes::Prerequisites
+UPDATE: Recipes::ProxyServer to support 9.5.4
+UPDATE: Recipes::Server to support 9.5.4
+UPDATE: Recipes::ServerWithConsole to include upgrades and build version handling
+UPDATE: Recipes::StandaloneComplete to support 9.5.4
+
+UPDATE: Resources to use win_clean_path instead of win_friendly_path from Windows Cookbook
+UPDATE: Resources::Catalog to handle installation of 9.5.4 media and upgrades of the current version from 9.5.0 to 9.5.4 when version is selected
+UPDATE: Resources::Console to support upgrading and installing 9.5.4
+UPDATE: Resources::Explorer to support 9.5.4 version upgrades
+UPDATE: Resources::Prerequisites to support new version of SQL Express installation based on the build_version
+UPDATE: Resources::Server to enable support for upgrading the version to 9.5.4
+UPDATE: Resources::Upgrade to initiate an upgrade when the Veeam Backup Catalog version does not match the requested build version
+
+UPDATE: Templates::SqlBuildScript to handle installation of SQL Express 2016 when performing a new installation of 9.5 Update 4
+ADD: Test::Inspec/9.5.4
+
+UPDATE: README
+BUMP: Metadata to Version 3.0.0
+
 ## Version 2.1.1
 2018-08-25
 
