@@ -1,8 +1,11 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Spec:: catalog
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# maintainer:: Exosphere Data, LLC
+# maintainer_email:: chef@exospheredata.com
+#
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 

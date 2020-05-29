@@ -1,13 +1,13 @@
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Resource:: server
 #
 # Author:: Jeremy Goodrum
 # Email:: chef@exospheredata.com
 #
-# Version:: 0.2.0
-# Date:: 2017-02-13
+# Version:: 1.0.0
+# Date:: 2018-04-29
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ property :share_path, String    # Future Property
 property :package_url, String
 property :package_checksum, String
 
-property :accept_eula, [TrueClass, FalseClass], default: false, required: true
+property :accept_eula, [true, false], required: true
 property :install_dir, String
-property :evaluation, [TrueClass, FalseClass], default: true
+property :evaluation, [true, false], default: true
 property :vbr_license_file, String
 property :vbr_check_updates, [Integer, TrueClass, FalseClass]
 
@@ -52,8 +52,8 @@ property :vbr_sqlserver_password, String
 property :pf_ad_nfsdatastore, String
 
 property :version, String, required: true
-property :keep_media, [TrueClass, FalseClass], default: false
-property :auto_reboot, [TrueClass, FalseClass], default: true
+property :keep_media, [true, false], default: false
+property :auto_reboot, [true, false], default: true
 
 # We need to include the windows helpers to keep things dry
 ::Chef::Provider.send(:include, Windows::Helper)
@@ -137,10 +137,6 @@ action :install do
 end
 
 action_class do
-  def whyrun_supported?
-    true
-  end
-
   def find_vbr_license
     license_file = win_clean_path(::File.join(Chef::Config[:file_cache_path], 'Veeam-license-file.lic'))
 

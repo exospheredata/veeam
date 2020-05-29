@@ -1,4 +1,4 @@
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Library:: helper
 #
 # Author:: Jeremy Goodrum
@@ -7,7 +7,7 @@
 # Version:: 0.1.0
 # Date:: 2017-02-07
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,6 +71,10 @@ module Veeam
         'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso',
         'package_checksum' => 'ecc27bbcf49104861566782701dca42375b324b4710e2fa79b5f8068c31c4494'
       }
+      when '10.0.0.4461' then {
+        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_10.0.0.4461.Update4.iso',
+        'package_checksum' => '5099df81e3230ca985be7cf97b905db23a8d0619c9479ed380295a7d518929f2'
+      }
       end
     end
 
@@ -116,6 +120,10 @@ module Veeam
         'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso',
         'package_checksum' => 'ecc27bbcf49104861566782701dca42375b324b4710e2fa79b5f8068c31c4494'
       }
+      when '10.0.0.4461' then {
+        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_10.0.0.4461.Update4.iso',
+        'package_checksum' => '5099df81e3230ca985be7cf97b905db23a8d0619c9479ed380295a7d518929f2'
+      }
       end
     end
 
@@ -124,27 +132,81 @@ module Veeam
       when '9.0' then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2012 (x64)' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2012 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
-        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SqlExpress\SQLEXPR_x64_ENU.exe' }
       }
       when /9.0.0.\d+/ then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2012 (x64)' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2012 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
-        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SqlExpress\SQLEXPR_x64_ENU.exe' }
       }
       when '9.5' then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
-        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SqlExpress\SQLEXPR_x64_ENU.exe' }
       }
       when /9.5.0.\d+/ then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
-        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SqlExpress\SQLEXPR_x64_ENU.exe' }
       }
       when /9.5.4.\d+/ then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
-        'SQL' => { 'Microsoft SQL Server 2016 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+        'SQL' => { 'Microsoft SQL Server 2016 (64-bit)' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe' }
+      }
+      when '10.0' then {
+        '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
+        '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
+        'SQL' => { 'Microsoft SQL Server 2016 (64-bit)' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe' }
+      }
+      when /10.0.0.\d+/ then {
+        '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
+        '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
+        'SQL' => { 'Microsoft SQL Server 2016 (64-bit)' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe' }
+      }
+      end
+    end
+
+    def dotnet_list(version)
+      case version.to_s # to_s to make sure someone didn't pass us an int
+      when '9.0' then {
+        # Microsoft .NET Framework 4.5.2
+        '379893' => 'NDP452-KB2901907-x86-x64-AllOS-ENU.exe'
+      }
+      when /9.\d+/ then {
+        '379893' => 'NDP452-KB2901907-x86-x64-AllOS-ENU.exe'
+      }
+      when '10.0' then {
+        '461814' => 'NDP472-KB4054530-x86-x64-AllOS-ENU.exe'
+      }
+      when /10.\d+/ then {
+        '461814' => 'NDP472-KB4054530-x86-x64-AllOS-ENU.exe'
+      }
+      end
+    end
+
+    def sqlexpress_list(version)
+      case version.to_s # to_s to make sure someone didn't pass us an int
+      when '9.0' then {
+        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SqlExpress\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+      }
+      when /9.0.0.\d+/ then {
+        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SqlExpress\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+      }
+      when '9.5' then {
+        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SqlExpress\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+      }
+      when /9.5.0.\d+/ then {
+        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SqlExpress\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+      }
+      when /9.5.4.\d+/ then {
+        'Microsoft SQL Server 2016 (64-bit)' => { 'installer' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+      }
+      when '10.0' then {
+        'Microsoft SQL Server 2016 (64-bit)' => { 'installer' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL13.SQLEXPRESS' }
+      }
+      when /10.0.0.\d+/ then {
+        'Microsoft SQL Server 2016 (64-bit)' => { 'installer' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL13.SQLEXPRESS' }
       }
       end
     end
@@ -178,6 +240,20 @@ module Veeam
         'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '9.5.0.836' },
         'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '9.5.0.836' },
         'Oracle' => { name: 'Veeam Explorer for Oracle', version: '9.5.0.836' }
+      }
+      when '10.0' then {
+        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '10.0.0.4461' },
+        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '10.0.0.4461' },
+        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '10.0.0.4461' },
+        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '10.0.0.4461' },
+        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '10.0.0.4461' }
+      }
+      when /10.0.\d+/ then {
+        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '10.0.0.4461' },
+        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '10.0.0.4461' },
+        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '10.0.0.4461' },
+        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '10.0.0.4461' },
+        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '10.0.0.4461' }
       }
       end
     end
@@ -259,7 +335,6 @@ module Veeam
           Mount-DiskImage -ImagePath "#{downloaded_file_name}"
         EOH
         action :run
-        guard_interpreter :powershell_script
         not_if "[boolean] (Get-DiskImage -ImagePath '#{downloaded_file_name}').DevicePath"
       end
     end
@@ -278,9 +353,10 @@ module Veeam
         not_if { ::File.exist?(update_path) }
       end
 
-      windows_zipfile win_clean_path(::File.join(install_media_path, '/Updates')) do
-        source downloaded_file_name
-        action :unzip
+      archive_file win_clean_path(::File.join(install_media_path, '/Updates')) do
+        destination win_clean_path(::File.join(install_media_path, '/Updates'))
+        path downloaded_file_name
+        action :extract
         not_if { ::File.exist?(update_path) }
       end
 
@@ -294,7 +370,6 @@ module Veeam
           Dismount-DiskImage -ImagePath "#{downloaded_file_name}"
         EOH
         action :run
-        guard_interpreter :powershell_script
         only_if "[boolean] (Get-DiskImage -ImagePath '#{downloaded_file_name}').DevicePath"
       end
     end

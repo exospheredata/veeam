@@ -1,8 +1,11 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Spec:: server
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# maintainer:: Exosphere Data, LLC
+# maintainer_email:: chef@exospheredata.com
+#
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
@@ -28,7 +31,7 @@ describe 'veeam::server' do
             allow_any_instance_of(Chef::DSL::RegistryHelper)
               .to receive(:registry_get_values)
               .and_return([{}, {}, {}, {}, {}, {}, { name: 'Release', data: 379893 }])
-            node.normal['veeam']['server']['accept_eula'] = true
+            node.override['veeam']['server']['accept_eula'] = true
           end
 
           let(:runner) do
@@ -75,7 +78,7 @@ describe 'veeam::server' do
             expect { chef_run }.to raise_error(RuntimeError, /Microsoft .NET Framework 4.5.2 or higher be installed/)
           end
           it 'raises an error when EULA not accepted' do
-            node.normal['veeam']['server']['accept_eula'] = false
+            node.override['veeam']['server']['accept_eula'] = false
             # Need to set a valid .NET Framework version
             expect { chef_run }.to raise_error(ArgumentError, /The Veeam Backup and Replication EULA must be accepted/)
           end

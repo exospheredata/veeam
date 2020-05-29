@@ -1,8 +1,11 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Spec:: host
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# maintainer:: Exosphere Data, LLC
+# maintainer_email:: chef@exospheredata.com
+#
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
@@ -30,15 +33,15 @@ describe 'veeam::host_mgmt' do
           before do
             Fauxhai.mock(platform: platform, version: version)
             allow(Mixlib::ShellOut).to receive(:new).and_return(shellout)
-            node.normal['veeam']['host']['vbr_server']   = 'veeam'
-            node.normal['veeam']['host']['vbr_username'] = 'admin'
-            node.normal['veeam']['host']['vbr_password'] = 'password'
-            node.normal['veeam']['host']['host_username'] = 'admin'
-            node.normal['veeam']['host']['host_password'] = 'password'
-            node.normal['veeam']['build'] = '9.5.0.1536'
-            node.normal['veeam']['host']['server'] = 'vc1'
-            node.normal['veeam']['host']['type']   = 'vmware'
-            node.normal['veeam']['host']['action'] = nil
+            node.override['veeam']['host']['vbr_server']   = 'veeam'
+            node.override['veeam']['host']['vbr_username'] = 'admin'
+            node.override['veeam']['host']['vbr_password'] = 'password'
+            node.override['veeam']['host']['host_username'] = 'admin'
+            node.override['veeam']['host']['host_password'] = 'password'
+            node.override['veeam']['build'] = '9.5.0.1536'
+            node.override['veeam']['host']['server'] = 'vc1'
+            node.override['veeam']['host']['type']   = 'vmware'
+            node.override['veeam']['host']['action'] = 'add'
           end
           let(:shellout) do
             # Creating a double allows us to stub out the response from Mixlib::ShellOut
@@ -68,6 +71,10 @@ describe 'veeam::host_mgmt' do
           let(:downloaded_file_name) { win_friendly_path(::File.join(package_save_dir, 'VeeamBackup_Replication_9.5.0.711.iso')) }
 
           it 'converges successfully' do
+            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(false_shell)
+            stubs_for_provider('veeam_host[vc1]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(false_shell)
+            end
             expect { chef_run }.not_to raise_error
             expect(chef_run).to install_veeam_prerequisites('Install Veeam Prerequisites')
             expect(chef_run).to install_veeam_console('Install Veeam Backup console')
@@ -75,13 +82,19 @@ describe 'veeam::host_mgmt' do
             expect(chef_run).to add_veeam_host(node['veeam']['host']['server'])
           end
           it 'Step into LWRP - veeam_host' do
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(false_shell)
+            stubs_for_provider('veeam_host[vc1]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(false_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Register Host to VBR/).and_return(true_shell)
+            end
             expect { chef_run }.not_to raise_error
             expect(chef_run).to run_powershell_script('Register Host Server')
             expect(chef_run).to_not run_powershell_script('Remove Host Server')
           end
           it 'Should not register the host if already done' do
             allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(true_shell)
+            stubs_for_provider('veeam_host[vc1]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(true_shell)
+            end
             expect { chef_run }.not_to raise_error
             expect(chef_run).to_not run_powershell_script('Register Host Server')
             expect(chef_run).to_not run_powershell_script('Remove Host Server')
@@ -93,15 +106,17 @@ describe 'veeam::host_mgmt' do
             expect { chef_run }.to raise_error(ArgumentError, /This resource requires that the Veeam Backup & Replication Console be installed on this host/)
           end
           it 'Should remove Host Server if action set to :remove' do
-            node.normal['veeam']['host']['action'] = 'remove'
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(true_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(true_shell)
+            node.override['veeam']['host']['action'] = 'remove'
+            stubs_for_provider('veeam_host[vc1]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Unregister Host to VBR/).and_return(true_shell)
+            end
             expect { chef_run }.not_to raise_error
             expect(chef_run).to remove_veeam_host(node['veeam']['host']['server'])
             expect(chef_run).to run_powershell_script('Remove Host Server')
           end
           it 'Should raise an error if action invalid' do
-            node.normal['veeam']['host']['action'] = 'delete'
+            node.override['veeam']['host']['action'] = 'delete'
             expect { chef_run }.to raise_error(ArgumentError, /Invalid value assigned to attribute \(node\['veeam'\]\['host'\]\['action'\]\): #{node['veeam']['host']['action']}/)
           end
         end

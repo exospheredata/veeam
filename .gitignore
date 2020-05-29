@@ -17,3 +17,5 @@ bin/*
 .kitchen.local.*.yml
 
 .delivery/cli.toml
+
+.vscode

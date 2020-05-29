@@ -1,13 +1,13 @@
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Resource:: prerequisites
 #
 # Author:: Jeremy Goodrum
 # Email:: chef@exospheredata.com
 #
-# Version:: 0.2.0
-# Date:: 2017-02-13
+# Version:: 1.0.0
+# Date:: 2018-04-29
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ property :package_url, String
 property :package_checksum, String
 
 property :version, String, required: true
-property :install_sql, [TrueClass, FalseClass], default: false
+property :install_sql, [true, false], default: false
 
 # We need to include the windows helpers to keep things dry
 ::Chef::Provider.send(:include, Windows::Helper)
@@ -66,7 +66,8 @@ action :install do
 
     # Compare the required Prerequisites with those installed.  If all are installed, then
     # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
-    return false if (prerequisites_required - installed_prerequisites).empty? && find_current_dotnet >= 379893
+    dotnet_version, _dotnet_installer = dotnet_list(test_version).first
+    return false if (prerequisites_required - installed_prerequisites).empty? && find_current_dotnet >= dotnet_version.to_i
   end
 
   package_save_dir = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
@@ -98,24 +99,21 @@ action :install do
 end
 
 action_class do
-  def whyrun_supported?
-    true
-  end
-
   def install_dotnet(downloaded_file_name)
-    return 'Already installed' if find_current_dotnet >= 379893
+    dotnet_version, dotnet_installer = dotnet_list(new_resource.version).first
+    return 'Already installed' if find_current_dotnet >= dotnet_version.to_i
     reboot 'DotNet Install Complete' do
       delay_mins 1
       reason 'Reboot required after an installation of .NET Framework'
       action :nothing
     end
 
-    ruby_block 'Install the .NET 4.5.2' do
+    ruby_block 'Install the .NET' do
       block do
         install_media_path = get_media_installer_location(downloaded_file_name)
-        windows_package 'Microsoft .NET Framework 4.5.2' do
+        windows_package 'Microsoft .NET Framework' do
           provider       Chef::Provider::Package::Windows
-          source         "#{install_media_path}\\Redistr\\NDP452-KB2901907-x86-x64-AllOS-ENU.exe"
+          source         "#{install_media_path}\\Redistr\\#{dotnet_installer}"
           installer_type :custom
           options        '/norestart /passive'
           action         :install
@@ -155,7 +153,8 @@ action_class do
   end
 
   def install_sql_express(downloaded_file_name)
-    installed_version_reg_key = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\\MSSQL11.SQLEXPRESS\MSSQLServer\CurrentVersion'
+    _sql_version, sql_configurations = sqlexpress_list(new_resource.version).first
+    installed_version_reg_key = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\#{sql_configurations['reg_key']}\\MSSQLServer\\CurrentVersion"
     return 'Already Installed' if registry_key_exists?(installed_version_reg_key, :machine)
     config_file_path = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'ConfigurationFile.ini'))
     output_file      = win_clean_path(::File.join(Chef::Config[:file_cache_path], 'sql_install.log'))
@@ -182,7 +181,7 @@ action_class do
           sensitive true
           source ::File.join('sql_server', 'sql_build_script.ps1.erb')
           variables(
-            sql_install_media: "#{install_media_path}\\Redistr\\x64",
+            sql_install_media: "#{install_media_path}\\Redistr\\x64\\#{sql_configurations['installer']}",
             sql_build_command: "/q /ConfigurationFile=#{config_file_path}",
             outputFilePath: output_file
           )

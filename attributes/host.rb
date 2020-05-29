@@ -1,8 +1,8 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Attributes:: host
 #
-# Copyright (c) 2017 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 
 default['veeam']['host']['vbr_server']    = nil
 default['veeam']['host']['vbr_port']      = 9392

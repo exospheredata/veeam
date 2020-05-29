@@ -1,13 +1,13 @@
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Resource:: catalog
 #
 # Author:: Jeremy Goodrum
 # Email:: chef@exospheredata.com
 #
-# Version:: 0.2.0
-# Date:: 2017-02-07
+# Version:: 1.0.0
+# Date:: 2018-04-29
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ property :vbrc_service_password, String
 property :vbrc_service_port, Integer
 
 property :version, String, required: true
-property :keep_media, [TrueClass, FalseClass], default: false
+property :keep_media, [true, false], default: false
 
 # We need to include the windows helpers to keep things dry
 ::Chef::Provider.send(:include, Windows::Helper)
@@ -118,10 +118,6 @@ action :install do
 end
 
 action_class do
-  def whyrun_supported?
-    true
-  end
-
   def perform_catalog_install(install_media_path)
     Chef::Log.debug 'Installing Veeam Backup Catalog service... begin'
     # In this case, we have many possible combinations of extra arugments that would need to be passed to the installer.

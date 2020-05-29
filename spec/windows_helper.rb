@@ -44,6 +44,11 @@ def mock_windows_system_framework
   allow_any_instance_of(Chef::Provider)
     .to receive(:is_package_installed?)
     .and_return(false)
+  # Resolves issue with testing on *Nix based systems
+  # https://github.com/chefspec/chefspec/issues/952#issuecomment-534982612
+  stubs_for_resource('windows_task') do |res|
+    allow(res).to receive(:user).and_return(nil)
+  end
 end
 
 def win_clean_path(path)

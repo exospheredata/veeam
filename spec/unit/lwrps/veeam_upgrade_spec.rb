@@ -1,8 +1,11 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Spec:: upgrade
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# maintainer:: Exosphere Data, LLC
+# maintainer_email:: chef@exospheredata.com
+#
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
@@ -30,7 +33,7 @@ describe 'veeam::upgrade' do
             allow_any_instance_of(Chef::Provider)
               .to receive(:find_current_veeam_version)
               .and_return('9.5')
-            node.normal['veeam']['build'] = '9.5.0.1536'
+            node.override['veeam']['build'] = '9.5.0.1536'
           end
 
           let(:runner) do
@@ -54,7 +57,7 @@ describe 'veeam::upgrade' do
             expect(chef_run).to_not run_ruby_block('Perform Upgrade Procedure')
           end
           it 'Step into LWRP - veeam_upgrade' do
-            node.normal['veeam']['installer']['update_url'] = 'http://download/VeeamBackup&Replication_9.5.0.1536.Update3.iso'
+            node.override['veeam']['installer']['update_url'] = 'http://download/VeeamBackup&Replication_9.5.0.1536.Update3.iso'
             expect { chef_run }.not_to raise_error
             expect(chef_run).to create_directory(package_save_dir)
             expect(chef_run).to create_remote_file(downloaded_file_name)
@@ -67,11 +70,11 @@ describe 'veeam::upgrade' do
             expect(chef_run).to run_powershell_script('Dismount Veeam media')
           end
           it 'should extract the media from a zip' do
-            node.normal['veeam']['installer']['update_url'] = 'http://download/VeeamBackup&Replication_9.5.0.1536.Update3.zip'
+            node.override['veeam']['installer']['update_url'] = 'http://download/VeeamBackup&Replication_9.5.0.1536.Update3.zip'
             downloaded_file_name = win_clean_path(::File.join(package_save_dir, 'VeeamBackup_Replication_9.5.0.1536.Update3.zip'))
             installer_path = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'Veeam/VeeamBackup_Replication_9.5.0.1536.Update3/Updates'))
             expect(chef_run).to create_remote_file(downloaded_file_name)
-            expect(chef_run).to unzip_windows_zipfile(installer_path)
+            expect(chef_run).to extract_archive_file(installer_path)
             expect(chef_run).to delete_file(downloaded_file_name)
           end
           it 'raises an error about .NET Framework' do
@@ -81,7 +84,7 @@ describe 'veeam::upgrade' do
             expect { chef_run }.to raise_error(RuntimeError, /Microsoft .NET Framework 4.5.2 or higher be installed/)
           end
           it 'returns an Argument error when invalid Veeam version supplied' do
-            node.normal['veeam']['build'] = '1.0'
+            node.override['veeam']['build'] = '1.0'
             expect { chef_run }.to raise_error(ArgumentError, /You must provide a package URL or choose a valid build/)
           end
         end

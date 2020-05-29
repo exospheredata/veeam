@@ -1,8 +1,8 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Attributes:: default
 #
-# Copyright (c) 2017 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 
 default['veeam']['version'] = '9.5'
 default['veeam']['installer']['package_url'] = nil # Local or custom URL location for ISO

@@ -1,13 +1,13 @@
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Resource:: explorer
 #
 # Author:: Jeremy Goodrum
 # Email:: chef@exospheredata.com
 #
-# Version:: 0.1.0
-# Date:: 2017-02-07
+# Version:: 1.0.0
+# Date:: 2018-04-29
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ property :package_url, String
 property :package_checksum, String
 
 property :version, String, required: true
-property :keep_media, [TrueClass, FalseClass], default: false
+property :keep_media, [true, false], default: false
 
 property :explorers, Array, required: true
 
@@ -124,11 +124,5 @@ action :install do
   file installer_file_name do
     backup false
     action :delete
-  end
-end
-
-action_class do
-  def whyrun_supported?
-    true
   end
 end

@@ -1,11 +1,11 @@
 #
 # Cookbook:: veeam
-# Spec:: proxy_remove_spec
+# Spec:: proxy_remove
 #
 # maintainer:: Exosphere Data, LLC
 # maintainer_email:: chef@exospheredata.com
 #
-# Copyright:: 2018, Exosphere Data, LLC, All Rights Reserved.
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
@@ -25,9 +25,9 @@ describe 'veeam::proxy_remove' do
         context "On #{platform} #{version}" do
           before do
             Fauxhai.mock(platform: platform, version: version)
-            node.normal['veeam']['proxy']['vbr_server']   = 'veeam'
-            node.normal['veeam']['proxy']['vbr_username'] = 'admin'
-            node.normal['veeam']['proxy']['vbr_password'] = 'password'
+            node.override['veeam']['proxy']['vbr_server']   = 'veeam'
+            node.override['veeam']['proxy']['vbr_username'] = 'admin'
+            node.override['veeam']['proxy']['vbr_password'] = 'password'
           end
           let(:runner) do
             ChefSpec::SoloRunner.new(platform: platform, version: version, file_cache_path: '/tmp/cache')
@@ -40,7 +40,7 @@ describe 'veeam::proxy_remove' do
           end
 
           it 'register using IP Address' do
-            node.normal['veeam']['proxy']['use_ip_address'] = true
+            node.override['veeam']['proxy']['use_ip_address'] = true
             expect(chef_run).to remove_veeam_proxy(node['ipaddress'])
           end
         end

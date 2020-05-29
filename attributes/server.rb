@@ -1,8 +1,8 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Attributes:: server
 #
-# Copyright (c) 2017 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 
 default['veeam']['server']['accept_eula'] = false
 default['veeam']['server']['install_dir'] = 'C:\\Program Files\\Veeam\\Backup and Replication\\'
