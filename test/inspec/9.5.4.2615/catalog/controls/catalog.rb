@@ -14,6 +14,6 @@ control 'catalog-feature-installed' do
 
   describe package('Veeam Backup Catalog') do
     it { should be_installed }
-    its('version') { should eq '9.5.4.2399' }
+    its('version') { should eq '9.5.4.2615' }
   end
 end

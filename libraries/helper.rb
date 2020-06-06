@@ -121,7 +121,7 @@ module Veeam
         'package_checksum' => 'ecc27bbcf49104861566782701dca42375b324b4710e2fa79b5f8068c31c4494'
       }
       when '10.0.0.4461' then {
-        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_10.0.0.4461.Update4.iso',
+        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso',
         'package_checksum' => '5099df81e3230ca985be7cf97b905db23a8d0619c9479ed380295a7d518929f2'
       }
       end
@@ -200,7 +200,7 @@ module Veeam
         'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SqlExpress\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
       }
       when /9.5.4.\d+/ then {
-        'Microsoft SQL Server 2016 (64-bit)' => { 'installer' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+        'Microsoft SQL Server 2016 (64-bit)' => { 'installer' => 'SqlExpress\2016SP1\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL13.SQLEXPRESS' }
       }
       when '10.0' then {
         'Microsoft SQL Server 2016 (64-bit)' => { 'installer' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL13.SQLEXPRESS' }
