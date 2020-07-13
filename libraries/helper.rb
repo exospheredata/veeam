@@ -72,7 +72,7 @@ module Veeam
         'package_checksum' => 'ecc27bbcf49104861566782701dca42375b324b4710e2fa79b5f8068c31c4494'
       }
       when '10.0.0.4461' then {
-        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_10.0.0.4461.Update4.iso',
+        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso',
         'package_checksum' => '5099df81e3230ca985be7cf97b905db23a8d0619c9479ed380295a7d518929f2'
       }
       end
@@ -152,6 +152,7 @@ module Veeam
       when /9.5.4.\d+/ then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
+        '2' => { 'Microsoft Report Viewer 2015 Runtime' => '..\\ReportViewer.msi' },
         'SQL' => { 'Microsoft SQL Server 2016 (64-bit)' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe' }
       }
       when '10.0' then {
@@ -188,16 +189,16 @@ module Veeam
     def sqlexpress_list(version)
       case version.to_s # to_s to make sure someone didn't pass us an int
       when '9.0' then {
-        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SqlExpress\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
       }
       when /9.0.0.\d+/ then {
-        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SqlExpress\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
       }
       when '9.5' then {
-        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SqlExpress\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
       }
       when /9.5.0.\d+/ then {
-        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SqlExpress\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
       }
       when /9.5.4.\d+/ then {
         'Microsoft SQL Server 2016 (64-bit)' => { 'installer' => 'SqlExpress\2016SP1\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL13.SQLEXPRESS' }
@@ -212,48 +213,27 @@ module Veeam
     end
 
     def explorers_list(version)
-      case version.to_s # to_s to make sure someone didn't pass us an int
-      when '9.0' then {
-        'ActiveDirectory' => 'Veeam Explorer for Microsoft Active Directory',
-        'SQL' => 'Veeam Explorer for Microsoft SQL Server',
-        'Exchange' => 'Veeam Explorer for Microsoft Exchange',
-        'SharePoint' => 'Veeam Explorer for Microsoft SharePoint',
-        'Oracle' => 'Veeam Explorer for Oracle'
-      }
-      when '9.5' then {
-        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '9.5.0.836' },
-        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '9.5.0.836' },
-        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '9.5.0.836' },
-        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '9.5.0.836' },
-        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '9.5.0.836' }
-      }
-      when /9.5.4.\d+/ then {
-        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '9.6.4.1053' },
-        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '9.6.4.1053' },
-        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '9.6.4.1053' },
-        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '9.6.4.1053' },
-        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '9.6.4.1053' }
-      }
-      when /9.5.0.\d+/ then {
-        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '9.5.0.836' },
-        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '9.5.0.836' },
-        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '9.5.0.836' },
-        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '9.5.0.836' },
-        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '9.5.0.836' }
+      case version.to_s # to_s to make sure someone didn't pass us an in
+      when /9.\d+/ then {
+        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory' },
+        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server' },
+        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange' },
+        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint' },
+        'Oracle' => { name: 'Veeam Explorer for Oracle' }
       }
       when '10.0' then {
-        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '10.0.0.4461' },
-        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '10.0.0.4461' },
-        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '10.0.0.4461' },
-        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '10.0.0.4461' },
-        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '10.0.0.4461' }
+        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory' },
+        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server' },
+        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange' },
+        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint' },
+        'Oracle' => { name: 'Veeam Explorer for Oracle' }
       }
       when /10.0.\d+/ then {
-        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '10.0.0.4461' },
-        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '10.0.0.4461' },
-        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '10.0.0.4461' },
-        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '10.0.0.4461' },
-        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '10.0.0.4461' }
+        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory' },
+        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server' },
+        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange' },
+        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint' },
+        'Oracle' => { name: 'Veeam Explorer for Oracle' }
       }
       end
     end

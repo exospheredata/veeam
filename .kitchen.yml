@@ -21,9 +21,10 @@ provisioner:
     - 35 # 35 is the exit code signaling that the node is rebooting
     - 259 # WinRM error during kitchen test when rebooting after installing .NET 4.5.2
   max_retries: 2
+  wait_for_retry: 120
   client_rb:
     exit_status: :enabled # Opt-in to the standardized exit codes
-    client_fork: false  # Forked instances don't return the real exit code
+    client_fork: false # Forked instances don't return the real exit code
 
 verifier:
   name: inspec
@@ -44,19 +45,19 @@ suites:
       - recipe[veeam::catalog]
     verifier:
       inspec_tests:
-        - test/inspec/9.5.0.711/catalog
+        - test/inspec/10.0.0.4461/catalog
     attributes:
       veeam:
-        version: '9.5'
+        version: "10.0"
   - name: console
     run_list:
       - recipe[veeam::console]
     verifier:
       inspec_tests:
-        - test/inspec/9.5.0.711/console
+        - test/inspec/10.0.0.4461/console
     attributes:
       veeam:
-        version: '9.5'
+        version: "10.0"
         console:
           accept_eula: true
   - name: server
@@ -64,10 +65,10 @@ suites:
       - recipe[veeam::server]
     verifier:
       inspec_tests:
-        - test/inspec/9.5.0.711/server
+        - test/inspec/10.0.0.4461/server
     attributes:
       veeam:
-        version: '9.5'
+        version: "10.0"
         server:
           accept_eula: true
   - name: server_with_console
@@ -75,11 +76,11 @@ suites:
       - recipe[veeam::server_with_console]
     verifier:
       inspec_tests:
-        - test/inspec/9.5.0.711/server
-        - test/inspec/9.5.0.711/console
+        - test/inspec/10.0.0.4461/server
+        - test/inspec/10.0.0.4461/console
     attributes:
       veeam:
-        version: '9.5'
+        version: "10.0"
         server:
           accept_eula: true
         console:
@@ -89,11 +90,11 @@ suites:
       - recipe[veeam::server_with_catalog]
     verifier:
       inspec_tests:
-        - test/inspec/9.5.0.711/catalog
-        - test/inspec/9.5.0.711/server
+        - test/inspec/10.0.0.4461/catalog
+        - test/inspec/10.0.0.4461/server
     attributes:
       veeam:
-        version: '9.5'
+        version: "10.0"
         server:
           accept_eula: true
   - name: standalone_complete
@@ -101,12 +102,12 @@ suites:
       - recipe[veeam::standalone_complete]
     verifier:
       inspec_tests:
-        - test/inspec/9.5.0.711/catalog
-        - test/inspec/9.5.0.711/server
-        - test/inspec/9.5.0.711/console
+        - test/inspec/10.0.0.4461/catalog
+        - test/inspec/10.0.0.4461/server
+        - test/inspec/10.0.0.4461/console
     attributes:
       veeam:
-        version: '9.5'
+        version: "10.0"
         server:
           accept_eula: true
         console:
@@ -116,10 +117,10 @@ suites:
       - recipe[veeam::proxy_server]
     verifier:
       inspec_tests:
-        - test/inspec/9.5.0.711/console
+        - test/inspec/10.0.0.4461/console
     attributes:
       veeam:
-        version: '9.5'
+        version: "10.0"
         console:
           accept_eula: true
         proxy:
@@ -129,10 +130,10 @@ suites:
       - recipe[veeam::proxy_remove]
     verifier:
       inspec_tests:
-        - test/inspec/9.5.0.711/console
+        - test/inspec/10.0.0.4461/console
     attributes:
       veeam:
-        version: '9.5'
+        version: "10.0"
         console:
           accept_eula: true
         proxy:
@@ -143,10 +144,10 @@ suites:
       - recipe[veeam::upgrade]
     verifier:
       inspec_tests:
-        - test/inspec/9.5.0.711/server
+        - test/inspec/10.0.0.4461/server
     attributes:
       veeam:
-        version: '9.5.0.1536'
+        version: "10.0.0.4461"
         server:
           accept_eula: true
         console:

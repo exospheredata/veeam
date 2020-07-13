@@ -61,14 +61,12 @@ action :install do
 
   new_resource.explorers.each do |explorer|
     package_name = explorers_hash[explorer][:name]
-    package_version = explorers_hash[explorer][:version]
+    # 2020-07-13
+    # If the explorer is installed, the upgrade process will handle the version changes
+    # and we should skip further processing.  Otherwise, we need to install this
+    # package
     next unless is_package_installed?(package_name)
-    installed_version = installed_packages[package_name][:version]
-    if installed_version == package_version
-      installed_explorers.push(explorer)
-    else
-      Chef::Log.info("The package #{package_name} is installed with version #{installed_version} but should be upgraded to #{package_version}")
-    end
+    installed_explorers.push(explorer)
   end
 
   # return false
@@ -99,16 +97,17 @@ action :install do
       install_media_path = get_media_installer_location(installer_file_name)
       veeam_explorer_root = "#{install_media_path}\\Explorers"
 
-      new_resource.explorers.each do |explorer|
-        Chef::Log.debug "Installing Veeam Explorer for #{explorers_hash[explorer][:name]}... begin"
-        windows_package explorers_hash[explorer][:name] do
+      (new_resource.explorers - installed_explorers).each do |explorer|
+        package_name = explorers_hash[explorer][:name]
+        Chef::Log.debug "Installing Veeam Explorer for #{package_name}... begin"
+        windows_package package_name do
           provider       Chef::Provider::Package::Windows
           source         "#{veeam_explorer_root}\\VeeamExplorerFor#{explorer}.msi"
           options        'ACCEPT_THIRDPARTY_LICENSES="1" ACCEPT_EULA="1"'
           installer_type :msi
           action         :install
         end
-        Chef::Log.debug "Installing Veeam Explorer for #{explorers_hash[explorer][:name]}... success"
+        Chef::Log.debug "Installing Veeam Explorer for #{package_name}... success"
       end
     end
   end

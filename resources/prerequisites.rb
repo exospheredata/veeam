@@ -49,26 +49,36 @@ action :install do
   # Halt this process now.  There is no URL for the package.
   raise ArgumentError, 'You must provide a package URL or choose a valid version' unless new_resource.package_url
 
-  base_version = /(\d+.\d+)/.match(new_resource.version).captures[0]
-  [base_version, new_resource.version].each do |test_version|
-    # Determine if all of the Veeam pre-requisites are installed and if so, then skip the processing.
-    prerequisites_required  = []
-    installed_prerequisites = []
-    prerequisites_hash      = prerequisites_list(test_version)
-
-    prerequisites_hash.each do |item, prerequisites|
-      package_name = prerequisites.map { |k, _v| k }.join(',')
-      unless item == 'SQL' && new_resource.install_sql == false
-        prerequisites_required.push(package_name)
-        installed_prerequisites.push(package_name) if is_package_installed?(package_name)
+  is_sql_installed = false
+  prerequisites_required = []
+  installed_prerequisites = []
+  # Determine if all of the Veeam pre-requisites are installed and if so, then skip the processing.
+  prerequisites_hash      = prerequisites_list(new_resource.version)
+  prerequisites_hash.each do |item, prerequisites|
+    package_name = prerequisites.map { |k, _v| k }.join(',')
+    prerequisites_required.push(package_name)
+    if item == 'SQL'
+      base_version = new_resource.version.match(/(^\d+.\d+)/).captures[0]
+      versions = [new_resource.version, base_version]
+      # If the system has been upgraded from 9.5 then we need to load that as part of the check
+      versions.push('9.5') if Gem::Version.new(base_version) > Gem::Version.new('9.5')
+      versions.each do |version|
+        _sql_version, sql_configurations = sqlexpress_list(version).first
+        installed_version_reg_key = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\#{sql_configurations['reg_key']}\\MSSQLServer\\CurrentVersion"
+        next unless registry_key_exists?(installed_version_reg_key, :machine)
+        installed_prerequisites.push(package_name)
+        is_sql_installed = true
+        break
       end
+    elsif is_package_installed?(package_name)
+      installed_prerequisites.push(package_name)
     end
-
-    # Compare the required Prerequisites with those installed.  If all are installed, then
-    # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
-    dotnet_version, _dotnet_installer = dotnet_list(test_version).first
-    return false if (prerequisites_required - installed_prerequisites).empty? && find_current_dotnet >= dotnet_version.to_i
   end
+
+  # Compare the required Prerequisites with those installed.  If all are installed, then
+  # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
+  dotnet_version, _dotnet_installer = dotnet_list(new_resource.version).first
+  return false if (prerequisites_required - installed_prerequisites).empty? && find_current_dotnet >= dotnet_version.to_i
 
   package_save_dir = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
@@ -89,7 +99,7 @@ action :install do
 
   install_dotnet(installer_file_name)
   install_sql_tools(installer_file_name)
-  install_sql_express(installer_file_name) if new_resource.install_sql
+  install_sql_express(installer_file_name) if new_resource.install_sql && !is_sql_installed
 
   # Dismount the ISO if it is mounted
   unmount_installer(installer_file_name)
@@ -154,8 +164,6 @@ action_class do
 
   def install_sql_express(downloaded_file_name)
     _sql_version, sql_configurations = sqlexpress_list(new_resource.version).first
-    installed_version_reg_key = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\#{sql_configurations['reg_key']}\\MSSQLServer\\CurrentVersion"
-    return 'Already Installed' if registry_key_exists?(installed_version_reg_key, :machine)
     config_file_path = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'ConfigurationFile.ini'))
     output_file      = win_clean_path(::File.join(Chef::Config[:file_cache_path], 'sql_install.log'))
     sql_build_script = win_clean_path(::File.join(Chef::Config[:file_cache_path], 'sql_build_script.ps1'))

@@ -63,6 +63,8 @@ describe 'veeam::prerequisites' do
           it 'should skip processing if everything is installed' do
             allow_any_instance_of(Chef::Provider).to receive(:is_package_installed?)
               .and_return(true)
+            allow_any_instance_of(Chef::DSL::RegistryHelper).to receive(:registry_key_exists?)
+              .and_return(true)
             allow_any_instance_of(Chef::DSL::RegistryHelper)
               .to receive(:registry_get_values)
               .and_return([{}, {}, {}, {}, {}, {}, { name: 'Release', data: 379893 }])
