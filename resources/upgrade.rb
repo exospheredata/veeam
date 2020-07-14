@@ -201,6 +201,7 @@ action_class do
     end
 
     reboot 'Required Reboot after Veeam Upgrade' do
+      delay_mins 1
       action :request_reboot
       only_if { reboot_pending? }
       only_if { new_resource.auto_reboot }

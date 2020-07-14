@@ -105,6 +105,7 @@ action_class do
   def install_dotnet(downloaded_file_name)
     return 'Already installed' if find_current_dotnet >= 379893
     reboot 'DotNet Install Complete' do
+      delay_mins 1
       reason 'Reboot required after an installation of .NET Framework'
       action :nothing
     end

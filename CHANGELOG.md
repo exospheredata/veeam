@@ -1,5 +1,10 @@
 # Change log information for Veeam Cookbook
 
+## Version 3.0.1
+2020-07-14
+
+Minor fix update to include `delay_min 1` to all reboot resources to cover a chef bug that lets some test-kitchen environments crash.
+
 ## Version 2.1.1
 2018-08-25
 

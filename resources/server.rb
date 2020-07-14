@@ -216,6 +216,7 @@ action_class do
     Chef::Log.debug 'Installing Veeam Backup server service... success'
 
     reboot 'Required Reboot after Veeam Installation or Upgrade' do
+      delay_mins 1
       action :request_reboot
       only_if { reboot_pending? }
       only_if { new_resource.auto_reboot }
