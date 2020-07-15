@@ -1,7 +1,7 @@
 # Change log information for Veeam Cookbook
 
 ## Version 4.0.0
-2020-06-03
+2020-07-15
 
 Major update to include support for Veeam 10.0.0 including changes to the method for installation of SQL Express and supported .NET Framework
 
@@ -20,6 +20,11 @@ Major update to include support for Veeam 10.0.0 including changes to the method
 - UPDATE: CHANGELOG.md
 - UPDATE: README.md
 - BUMP:   Metadata 4.0.0
+
+## Version 3.0.1
+2020-07-14
+
+Minor fix update to include `delay_min 1` to all reboot resources to cover a chef bug that lets some test-kitchen environments crash.
 
 ## Version 3.0.0
 2019-01-22

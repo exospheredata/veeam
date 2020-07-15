@@ -77,7 +77,7 @@ The installation of SQL Express requires that a temporary Scheduled Task be crea
 
 ### Chef
 
-- Chef 12.5+
+- Chef 16.2+
 
 ### Cookbooks
 
@@ -88,7 +88,7 @@ The installation of SQL Express requires that a temporary Scheduled Task be crea
 ### Installation Media
 | Attribute | Type | Description | Default Value | Mandatory |
 | --- | --- | --- | --- | --- |
-| `node['veeam']['version']` | String. | Base version of Veeam to install and used to download the appropriate ISO.  Supported versions are '9.0' and '9.5' | '9.5' | |
+| `node['veeam']['version']` | String. | Base version of Veeam to install and used to download the appropriate ISO.  Supported versions are '9.0', '9.5' and '10.0 | '10.0' | |
 | `node['veeam']['installer']['package_url']` | String. | Custom URL for the Veeam Backup and Replication ISO. If not provided, then the ISO will be downloaded directly from Veeam | nil | |
 | `node['veeam']['installer']['package_checksum']` | String. | Sha256 hash of the remote ISO file. Required when setting the `node['veeam']['installer']['package_url']`| nil | |
 | `node['veeam']['license_url']` | String. | URL for downloading the license filed used by this server.  If not provided, the [license data_bag](#veeam-backup-and-replication-license-file) will be checked or the software will be installed in evaluation mode. | nil | |
@@ -183,18 +183,23 @@ The attribute `node['veeam']['version']` is used to evaluate the ISO download pa
 | **9.5.0.1536** | [VeeamBackup&Replication_9.5.0.1536.Update3.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.iso) | 5020ef015e4d9ff7070d43cf477511a2b562d8044975552fd08f82bdcf556a43 |
 | **9.5.0.1922** | [VeeamBackup&Replication_9.5.0.1922.Update3a.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.iso) | 9a6fa7d857396c058b2e65f20968de56f96bc293e0e8fd9f1a848c7d71534134 |
 | **9.5.4.2615** | [VeeamBackup&Replication_9.5.4.2615.Update4.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso) | 8a594cec74059f9929ea765ac5e70a49da6fc93803b567cbb9d74fbb1a49a6cc |
+| **10.0** | [VeeamBackup&Replication_10.0.0.4461.iso](http://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso) | 5099df81e3230ca985be7cf97b905db23a8d0619c9479ed380295a7d518929f2 |
+| **10.0.0.4461** | [VeeamBackup&Replication_10.0.0.4461.iso](http://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso) | 5099df81e3230ca985be7cf97b905db23a8d0619c9479ed380295a7d518929f2 |
 
 
 ### Veeam Backup and Replication Update Zip files
 The attribute `node['veeam']['build']` is used to evaluate the Zip download path and checksum for the installation media.  When provided, the build selected will be downloaded based on the value found in `libraries/helper.rb`.  This media path can be overridden by providing the appropriate installation media attributes - `node['veeam']['installer']['update_url']` and `node['veeam']['installer']['update_checksum']`.  By default, these attributes are matching their corresponding `node['veeam']['installer']['package_url']` and `node['veeam']['installer']['package_checksum']` values and the system will download the Zip every time.
 
+_Note: As of 9.5 Update 4, ISO based upgrades must be done using the `package_url` method and not using the `update_url` process to ensure that prerequisites are installed completely._
+
 | Version | ISO URL | SHA256 |
 | ------------- |-------------|-------------|
-| **Update 1** | [VeeamBackup&Replication_9.5.0.823_Update1.zip](https://download.veeam.com/VeeamBackup&Replication_9.5.0.823_Update1.zip) | c07bdfb3b90cc609d21ba94584ba19d8eaba16faa31f74ad80814ec9288df492 |
-| **Update 2** | [VeeamBackup&Replication_9.5.0.1038.Update2.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1038.Update2.zip) | d800bf5414f1bde95fba5fddbd86146c75a5a2414b967404792cc32841cb4ffb |
-| **Update 3** | [VeeamBackup&Replication_9.5.0.1536.Update3.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.zip) | 38ed6a30aa271989477684fdfe7b98895affc19df7e1272ee646bb50a059addc |
-| **Update 3a** | [VeeamBackup&Replication_9.5.0.1922.Update3a.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.zip) | f6b3fc0963b09362c535ef49691c51d368266cc91d6833c80c70342161bb7123 |
-| **Update 4** | [VeeamBackup&Replication_9.5.4.2615.Update4.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso) | 8a594cec74059f9929ea765ac5e70a49da6fc93803b567cbb9d74fbb1a49a6cc |
+| **9.5 Update 1** | [VeeamBackup&Replication_9.5.0.823_Update1.zip](https://download.veeam.com/VeeamBackup&Replication_9.5.0.823_Update1.zip) | c07bdfb3b90cc609d21ba94584ba19d8eaba16faa31f74ad80814ec9288df492 |
+| **9.5 Update 2** | [VeeamBackup&Replication_9.5.0.1038.Update2.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1038.Update2.zip) | d800bf5414f1bde95fba5fddbd86146c75a5a2414b967404792cc32841cb4ffb |
+| **9.5 Update 3** | [VeeamBackup&Replication_9.5.0.1536.Update3.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.zip) | 38ed6a30aa271989477684fdfe7b98895affc19df7e1272ee646bb50a059addc |
+| **9.5 Update 3a** | [VeeamBackup&Replication_9.5.0.1922.Update3a.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.zip) | f6b3fc0963b09362c535ef49691c51d368266cc91d6833c80c70342161bb7123 |
+| **9.5 Update 4** | [VeeamBackup&Replication_9.5.4.2615.Update4.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso) | 8a594cec74059f9929ea765ac5e70a49da6fc93803b567cbb9d74fbb1a49a6cc |
+
 
 ### Veeam Backup and Replication License file
 The server must be licensed to unlock the full potential of the application.  The attribute `node['veeam']['server']['evaluation']` should be configured as `false`.  To license, choose one of the below options.
@@ -214,6 +219,9 @@ The process to perform upgrades requires that the appropriate installation media
 > As of Update 4, the upgrade process has changed.  The update to version 9.5.4+ will be automatically applied if the installer media leverages Update4.  Due to the nature of the process, a reboot is required.  The Automatic Reboot will occur at the end of the convergance unless the attribute `nde['veeam']['reboot_on_upgrade']` equals false
 
 ### Configuring the Updates
+
+_Note: As of 9.5 Update 4, ISO based upgrades must be done using the `package_url` method and not using the `update_url` process to ensure that prerequisites are installed completely._
+
 Updates are identified by passing one of the following to the attributes for the server:
 1. `node['veeam']['installer']['update_url']` attribute should contain either the full installation ISO or the update ZIP link.  The file name must include the full build name like such:
     - VeeamBackup&Replication_9.5.0.1536.Update3.iso
@@ -227,6 +235,8 @@ Updates are identified by passing one of the following to the attributes for the
     - 9.5.0.1536 (Update3)
     - 9.5.0.1922 (Update3a)
     - 9.5.4.2615 (Update4)
+    - 10.0 (defaults to GA)
+    - 10.0.0.4461 (GA)
 
 ### Upgrade Process and Warnings
 *Warning*
