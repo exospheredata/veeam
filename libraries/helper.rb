@@ -73,7 +73,7 @@ module Veeam
       }
       when '10.0.0.4461' then {
         'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso',
-        'package_checksum' => '5099df81e3230ca985be7cf97b905db23a8d0619c9479ed380295a7d518929f2'
+        'package_checksum' => '26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650'
       }
       end
     end
@@ -122,7 +122,7 @@ module Veeam
       }
       when '10.0.0.4461' then {
         'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso',
-        'package_checksum' => '5099df81e3230ca985be7cf97b905db23a8d0619c9479ed380295a7d518929f2'
+        'package_checksum' => '26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650'
       }
       end
     end

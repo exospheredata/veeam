@@ -183,8 +183,8 @@ The attribute `node['veeam']['version']` is used to evaluate the ISO download pa
 | **9.5.0.1536** | [VeeamBackup&Replication_9.5.0.1536.Update3.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.iso) | 5020ef015e4d9ff7070d43cf477511a2b562d8044975552fd08f82bdcf556a43 |
 | **9.5.0.1922** | [VeeamBackup&Replication_9.5.0.1922.Update3a.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.iso) | 9a6fa7d857396c058b2e65f20968de56f96bc293e0e8fd9f1a848c7d71534134 |
 | **9.5.4.2615** | [VeeamBackup&Replication_9.5.4.2615.Update4.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso) | 8a594cec74059f9929ea765ac5e70a49da6fc93803b567cbb9d74fbb1a49a6cc |
-| **10.0** | [VeeamBackup&Replication_10.0.0.4461.iso](http://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso) | 5099df81e3230ca985be7cf97b905db23a8d0619c9479ed380295a7d518929f2 |
-| **10.0.0.4461** | [VeeamBackup&Replication_10.0.0.4461.iso](http://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso) | 5099df81e3230ca985be7cf97b905db23a8d0619c9479ed380295a7d518929f2 |
+| **10.0** | [VeeamBackup&Replication_10.0.0.4461.iso](http://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso) | 26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650 |
+| **10.0.0.4461** | [VeeamBackup&Replication_10.0.0.4461.iso](http://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso) | 26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650 |
 
 
 ### Veeam Backup and Replication Update Zip files
