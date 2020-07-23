@@ -1,5 +1,10 @@
 # Change log information for Veeam Cookbook
 
+## Version 3.0.2
+2020-07-24
+
+Minor fix update for SQL Express installation on domain joined computer.
+
 ## Version 3.0.1
 2020-07-14
 
