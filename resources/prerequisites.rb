@@ -162,6 +162,7 @@ action_class do
     sql_build_script = win_clean_path(::File.join(Chef::Config[:file_cache_path], 'sql_build_script.ps1'))
 
     sql_sys_admin_list = "NT AUTHORITY\\SYSTEM\" \"#{node['hostname']}\\#{ENV['USERNAME']}"
+    sql_sys_admin_list = "NT AUTHORITY\\SYSTEM\" \"#{ENV['USERDOMAIN']}\\#{ENV['USERNAME']}" if node['kernel']['cs_info']['part_of_domain']
     sql_sys_admin_list = node['veeam']['server']['vbr_service_user'] if node['veeam']['server']['vbr_service_user']
 
     template config_file_path do
