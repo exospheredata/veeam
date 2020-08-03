@@ -21,6 +21,11 @@ Major update to include support for Veeam 10.0.0 including changes to the method
 - UPDATE: README.md
 - BUMP:   Metadata 4.0.0
 
+## Version 3.0.2
+2020-07-24
+
+Minor fix update for SQL Express installation on domain joined computer.
+
 ## Version 3.0.1
 2020-07-14
 
