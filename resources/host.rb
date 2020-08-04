@@ -84,19 +84,21 @@ action :add do
         $VbrServer = Get-VBRServer -Name #{new_resource.hostname}
         if(!$VbrServer) {
           $arguments  = " -Name #{new_resource.hostname}"
-          $arguments += " -Port #{new_resource.host_port}"
           $arguments += " -Description '#{new_resource.description ? "ADDED by CHEF: #{new_resource.description}" : "ADDED by CHEF: #{new_resource.host_type.upcase} Server"}'"
           $arguments += " -Credentials $VbrCredentials"
 
           switch("#{new_resource.host_type}"){
             "vmware" {
               $command = "Add-VBRvCenter"
+              $arguments += " -Port #{new_resource.host_port}"
             }
             "esxi" {
               $command = "Add-VBRESXi"
+              $arguments += " -Port #{new_resource.host_port}"
             }
             "esx_legacy" {
               $command = "Add-VBRESX"
+              $arguments += " -Port #{new_resource.host_port}"
             }
             "hyperv" {
               $command = "Add-VBRHvHost"
