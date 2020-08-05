@@ -85,7 +85,7 @@ action :add do
         Connect-VBRServer `
           -Server #{new_resource.vbr_server} `
           -User #{new_resource.vbr_username} `
-          -Password #{new_resource.vbr_password} `
+          -Password "#{new_resource.vbr_password}" `
           -Port #{new_resource.vbr_server_port} `
           -ErrorAction Stop
 
@@ -96,7 +96,7 @@ action :add do
         if (!$VbrCredentials){
           $VbrCredentials = (Add-VBRCredentials `
             -User #{new_resource.proxy_username} `
-            -Password #{new_resource.proxy_password} `
+            -Password "#{new_resource.proxy_password}" `
             -Description "ADDED BY CHEF: Proxy Server Credentials" `
             -Type Windows)
         }
@@ -125,7 +125,7 @@ action :add do
         Connect-VBRServer `
           -Server #{new_resource.vbr_server} `
           -User #{new_resource.vbr_username} `
-          -Password #{new_resource.vbr_password} `
+          -Password "#{new_resource.vbr_password}" `
           -Port #{new_resource.vbr_server_port} `
           -ErrorAction Stop
 
@@ -185,7 +185,7 @@ action :remove do
         Connect-VBRServer `
           -Server #{new_resource.vbr_server} `
           -User #{new_resource.vbr_username} `
-          -Password #{new_resource.vbr_password} `
+          -Password "#{new_resource.vbr_password}" `
           -Port #{new_resource.vbr_server_port} `
           -ErrorAction Stop
 
@@ -222,7 +222,7 @@ action :remove do
         Connect-VBRServer `
           -Server #{new_resource.vbr_server} `
           -User #{new_resource.vbr_username} `
-          -Password #{new_resource.vbr_password} `
+          -Password "#{new_resource.vbr_password}" `
           -Port #{new_resource.vbr_server_port} `
           -ErrorAction Stop
 
@@ -250,7 +250,7 @@ action_class do
         Connect-VBRServer `
           -Server #{new_resource.vbr_server} `
           -User #{new_resource.vbr_username} `
-          -Password #{new_resource.vbr_password} `
+          -Password "#{new_resource.vbr_password}" `
           -Port #{new_resource.vbr_server_port} `
           -ErrorAction Stop
         $VbrServer = Get-VBRServer -Name "#{new_resource.name}" -ErrorAction SilentlyContinue
@@ -277,7 +277,7 @@ action_class do
         Connect-VBRServer `
           -Server #{new_resource.vbr_server} `
           -User #{new_resource.vbr_username} `
-          -Password #{new_resource.vbr_password} `
+          -Password "#{new_resource.vbr_password}" `
           -Port #{new_resource.vbr_server_port} `
           -ErrorAction Stop
 

@@ -65,7 +65,7 @@ action :add do
         Connect-VBRServer `
           -Server #{new_resource.vbr_server} `
           -User #{new_resource.vbr_username} `
-          -Password #{new_resource.vbr_password} `
+          -Password "#{new_resource.vbr_password}" `
           -Port #{new_resource.vbr_server_port} `
           -ErrorAction Stop
 
@@ -76,7 +76,7 @@ action :add do
         if (!$VbrCredentials){
           $VbrCredentials = (Add-VBRCredentials `
             -User #{new_resource.host_username} `
-            -Password #{new_resource.host_password} `
+            -Password "#{new_resource.host_password}" `
             -Description "ADDED BY CHEF: #{new_resource.host_type.upcase} Server Credentials" `
             -Type Windows)
         }
@@ -155,7 +155,7 @@ action :remove do
         Connect-VBRServer `
           -Server #{new_resource.vbr_server} `
           -User #{new_resource.vbr_username} `
-          -Password #{new_resource.vbr_password} `
+          -Password "#{new_resource.vbr_password}" `
           -Port #{new_resource.vbr_server_port} `
           -ErrorAction Stop
 
@@ -182,7 +182,7 @@ action_class do
         Connect-VBRServer `
           -Server #{new_resource.vbr_server} `
           -User #{new_resource.vbr_username} `
-          -Password #{new_resource.vbr_password} `
+          -Password "#{new_resource.vbr_password}" `
           -Port #{new_resource.vbr_server_port} `
           -ErrorAction Stop
         $VbrServer = Get-VBRServer -Name "#{new_resource.name}" -ErrorAction SilentlyContinue
