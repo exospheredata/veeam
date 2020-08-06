@@ -1,5 +1,10 @@
 # Change log information for Veeam Cookbook
 
+## Version 4.0.2
+2020-08-6
+
+Added support for Veeam 9.5.4b
+
 ## Version 4.0.0
 2020-07-15
 
