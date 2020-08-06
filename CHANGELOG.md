@@ -1,6 +1,6 @@
 # Change log information for Veeam Cookbook
 
-## Version 4.0.2
+## Version 4.0.1
 2020-08-06
 
 Updated - Changed SQL authentication mode from "Mixed" to "Windows"
