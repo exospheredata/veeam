@@ -182,6 +182,7 @@ The attribute `node['veeam']['version']` is used to evaluate the ISO download pa
 | **9.5.0.1536** | [VeeamBackup&Replication_9.5.0.1536.Update3.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.iso) | 5020ef015e4d9ff7070d43cf477511a2b562d8044975552fd08f82bdcf556a43 |
 | **9.5.0.1922** | [VeeamBackup&Replication_9.5.0.1922.Update3a.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.iso) | 9a6fa7d857396c058b2e65f20968de56f96bc293e0e8fd9f1a848c7d71534134 |
 | **9.5.4.2615** | [VeeamBackup&Replication_9.5.4.2615.Update4.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso) | 8a594cec74059f9929ea765ac5e70a49da6fc93803b567cbb9d74fbb1a49a6cc |
+| **9.5.4.2866** | [VeeamBackup&Replication_9.5.4.2866.Update4b_20191210.iso](https://download2.veeam.com/VeeamBackup&Replication_9.5.4.2866.Update4b_20191210.iso) | cfc41596154563f60b74320634589721fd1110c87e04632068bc5234aada342e |
 | **10.0** | [VeeamBackup&Replication_10.0.0.4461.iso](http://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso) | 26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650 |
 | **10.0.0.4461** | [VeeamBackup&Replication_10.0.0.4461.iso](http://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso) | 26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650 |
 
@@ -198,6 +199,7 @@ _Note: As of 9.5 Update 4, ISO based upgrades must be done using the `package_ur
 | **9.5 Update 3** | [VeeamBackup&Replication_9.5.0.1536.Update3.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.zip) | 38ed6a30aa271989477684fdfe7b98895affc19df7e1272ee646bb50a059addc |
 | **9.5 Update 3a** | [VeeamBackup&Replication_9.5.0.1922.Update3a.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.zip) | f6b3fc0963b09362c535ef49691c51d368266cc91d6833c80c70342161bb7123 |
 | **9.5 Update 4** | [VeeamBackup&Replication_9.5.4.2615.Update4.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso) | 8a594cec74059f9929ea765ac5e70a49da6fc93803b567cbb9d74fbb1a49a6cc |
+
 
 
 ### Veeam Backup and Replication License file
@@ -234,6 +236,7 @@ Updates are identified by passing one of the following to the attributes for the
     - 9.5.0.1536 (Update3)
     - 9.5.0.1922 (Update3a)
     - 9.5.4.2615 (Update4)
+    - 9.5.4.2866 (Update4b)
     - 10.0 (defaults to GA)
     - 10.0.0.4461 (GA)
 
