@@ -58,7 +58,12 @@ action :install do
 
   # => So without a build we will have a hard time determining how to upgrade.  Since we have the update url
   # => we can extract the build from this.
-  new_resource.build = /(\d+.\d+.\d+.\d+)/.match(new_resource.package_url.split('/')[-1]).captures[0] unless new_resource.build
+  # => 2020-08-05: If we pass a ZIP then alway use that version for the upgrade
+
+  if /(.zip)/.match(new_resource.package_url.split('/')[-1]) || !new_resource.build
+    new_resource.build = /(\d+.\d+.\d+.\d+)/.match(new_resource.package_url.split('/')[-1]).captures[0]
+    Chef::Log.info("Looking for: #{new_resource.build}")
+  end
 
   # => We need to determine the actual build of installed Veeam Software.  Since there are three main packages
   # => we will need to iterate through their possible locations.

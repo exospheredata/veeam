@@ -45,10 +45,9 @@ action :install do
   # We will use the Windows Helper 'is_package_installed?' to see if the Console is installed.  If it is installed, then
   # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
   if is_package_installed?('Veeam Backup & Replication Console')
-    installed_version = installed_packages['Veeam Backup & Replication Console'][:version]
 
     # => If the build version and the installed version match then return up-to-date
-    return false if Gem::Version.new(new_resource.version) == Gem::Version.new(find_current_veeam_version('Veeam Backup & Replication Server'))
+    return false if Gem::Version.new(new_resource.version) <= Gem::Version.new(find_current_veeam_version('Veeam Backup & Replication Server'))
 
     # => Previous versions are upgraded through update files and therefore, this is up-to-date
     return false if Gem::Version.new(new_resource.version) <= Gem::Version.new('9.5.3.0')
