@@ -130,7 +130,6 @@ The installation of SQL Express requires that a temporary Scheduled Task be crea
 | `node['veeam']['server']['vbr_sqlserver_password']` | String | This parameter must be used if you have specified the `VBR_SQLSERVER_AUTHENTICATION` parameter.  Specifies a password to connect to the Microsoft SQL Server in the SQL Server authentication mode. | nil | |
 | `node['veeam']['server']['pf_ad_nfsdatastore']` | String | Specifies the vPower NFS root folder to which Instant VM Recovery cache will be stored. | C:\ProgramData\Veeam\Backup\NfsDatastore\ | |
 | `node['veeam']['server']['keep_media']` | TrueFalse |  Determines if the recipe should keep the media at the end of the installation. | false | |
-| `node['sql_server']['server_sa_password']` | String | Configures the SQL Admin password for the SQLExpress instance. | 'Veeam1234' | |
 | `node['veeam']['server']['explorers']` | Array. List of Veeam Explorers to install. | 'ActiveDirectory','Exchange','SQL','Oracle','SharePoint' | |
 
 ### Console

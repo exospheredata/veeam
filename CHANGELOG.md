@@ -3,6 +3,7 @@
 ## Version 4.0.2
 2020-08-12
 
+Updated - Changed SQL authentication mode from "Mixed" to "Windows"
 Updated the upgrade process to handle incremental upgrades and setting the correct build_version based on the package_url
 
 ## Version 4.0.1
