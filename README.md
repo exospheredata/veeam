@@ -199,6 +199,7 @@ _Note: As of 9.5 Update 4, ISO based upgrades must be done using the `package_ur
 | **9.5 Update 3** | [VeeamBackup&Replication_9.5.0.1536.Update3.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.zip) | 38ed6a30aa271989477684fdfe7b98895affc19df7e1272ee646bb50a059addc |
 | **9.5 Update 3a** | [VeeamBackup&Replication_9.5.0.1922.Update3a.zip](http://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.zip) | f6b3fc0963b09362c535ef49691c51d368266cc91d6833c80c70342161bb7123 |
 | **9.5 Update 4** | [VeeamBackup&Replication_9.5.4.2615.Update4.iso](http://download.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso) | 8a594cec74059f9929ea765ac5e70a49da6fc93803b567cbb9d74fbb1a49a6cc |
+| **9.5 Update 4b** | [VeeamBackup&Replication_9.5.4.2866.Update4b_20191210.zip](https://download.veeam.com/VeeamBackup&Replication_9.5.4.2866.Update4b_20191210.zip) | e0b29d2585ba2adb0914976bf83d7f0e11c2db7365af9ff43a33cb36b23425c2 |
 
 
 
