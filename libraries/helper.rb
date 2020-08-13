@@ -75,6 +75,10 @@ module Veeam
         'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.4.2866.Update4b_20191210.iso',
         'package_checksum' => 'cfc41596154563f60b74320634589721fd1110c87e04632068bc5234aada342e'
       }
+      when '10.0' then {
+        'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso',
+        'package_checksum' => '26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650'
+      }
       when '10.0.0.4461' then {
         'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso',
         'package_checksum' => '26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650'

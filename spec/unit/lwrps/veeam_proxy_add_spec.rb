@@ -66,7 +66,7 @@ describe 'veeam::proxy_server' do
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
           let(:package_save_dir) { win_clean_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
-          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup_Replication_9.5.0.711.iso')) }
+          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup_Replication_10.0.0.4461.iso')) }
 
           it 'converges successfully' do
             stubs_for_provider('veeam_proxy[Fauxhai]') do |provider|

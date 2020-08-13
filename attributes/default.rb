@@ -15,14 +15,10 @@ default['veeam']['build'] = if node['veeam']['installer']['update_url'].nil? && 
                               node['veeam']['version']
                             elsif node['veeam']['installer']['update_url'] == node['veeam']['installer']['package_url']
                               /(\d+.\d+.\d+.\d+)/.match(node['veeam']['installer']['package_url'].split('/')[-1]).captures[0]
-                            elsif node['veeam']['installer']['update_url'].nil?
+                            elsif !node['veeam']['installer']['package_url'].nil?
                               /(\d+.\d+.\d+.\d+)/.match(node['veeam']['installer']['package_url'].split('/')[-1]).captures[0]
-                            elsif /(.zip)/.match(node['veeam']['installer']['update_url'].split('/')[-1])
-                              /(\d+.\d+.\d+.\d+)/.match(node['veeam']['installer']['package_url'].split('/')[-1]).captures[0]
-                            elsif /(\d+.\d+.\d+.\d+)/.match(node['veeam']['installer']['update_url'].split('/')[-1])
-                              /(\d+.\d+.\d+.\d+)/.match(node['veeam']['installer']['update_url'].split('/')[-1]).captures[0]
                             else
-                              /(\d+.\d+.\d+.\d+)/.match(node['veeam']['installer']['package_url'].split('/')[-1]).captures[0]
+                              node['veeam']['version']
                             end
 default['veeam']['reboot_on_upgrade'] = true
 default['veeam']['upgrade']['keep_media'] = false

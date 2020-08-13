@@ -34,7 +34,7 @@ describe 'veeam::prerequisites' do
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
           let(:package_save_dir) { win_clean_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
-          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup&Replication_9.5.0.711.iso')) }
+          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup&Replication_10.0.0.4461.iso')) }
 
           it 'converges successfully' do
             expect(chef_run).to install_veeam_prerequisites('Install Veeam Prerequisites')
@@ -67,7 +67,7 @@ describe 'veeam::prerequisites' do
               .and_return(true)
             allow_any_instance_of(Chef::DSL::RegistryHelper)
               .to receive(:registry_get_values)
-              .and_return([{}, {}, {}, {}, {}, {}, { name: 'Release', data: 379893 }])
+              .and_return([{}, {}, {}, {}, {}, {}, { name: 'Release', data: 461814 }])
             expect(chef_run).not_to create_directory(package_save_dir)
           end
           it 'returns an Argument error when invalid Veeam version supplied' do
