@@ -83,6 +83,10 @@ module Veeam
         'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso',
         'package_checksum' => '26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650'
       }
+      when '10.0.1.4854' then {
+        'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_10.0.1.4854_20200723.iso',
+        'package_checksum' => '378ae6a95ca683a12d9872eec7596bf2b17848c880812484e6e9e1dd55ec2dad'
+      }
       end
     end
 
@@ -136,6 +140,10 @@ module Veeam
         'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso',
         'package_checksum' => '26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650'
       }
+      when '10.0.1.4854' then {
+        'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_10.0.1.4854_20200723.iso',
+        'package_checksum' => '378ae6a95ca683a12d9872eec7596bf2b17848c880812484e6e9e1dd55ec2dad'
+      }
       end
     end
 
@@ -172,7 +180,7 @@ module Veeam
         '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
         'SQL' => { 'Microsoft SQL Server 2016 (64-bit)' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe' }
       }
-      when /10.0.0.\d+/ then {
+      when /10.0.\d+/ then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
         'SQL' => { 'Microsoft SQL Server 2016 (64-bit)' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe' }
@@ -218,7 +226,7 @@ module Veeam
       when '10.0' then {
         'Microsoft SQL Server 2016 (64-bit)' => { 'installer' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL13.SQLEXPRESS' }
       }
-      when /10.0.0.\d+/ then {
+      when /10.0.\d+/ then {
         'Microsoft SQL Server 2016 (64-bit)' => { 'installer' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL13.SQLEXPRESS' }
       }
       end

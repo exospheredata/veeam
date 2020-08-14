@@ -1,5 +1,12 @@
 # Change log information for Veeam Cookbook
 
+## Version 4.0.3
+2020-08-14
+
+UPDATE: Library::Helper to include 10.0.1.4854 (10.0a) installation
+UPDATE: Resource::Console to correct product version to look at individual solution
+UPDATE: Resource::Catalog to correct product version to look at individual solution
+
 ## Version 4.0.2
 2020-08-12
 

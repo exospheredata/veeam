@@ -50,7 +50,7 @@ action :install do
   if is_package_installed?('Veeam Backup Catalog')
 
     # => If the build version and the installed version match then return up-to-date
-    return false if Gem::Version.new(new_resource.version) <= Gem::Version.new(find_current_veeam_version('Veeam Backup & Replication Server'))
+    return false if Gem::Version.new(new_resource.version) <= Gem::Version.new(find_current_veeam_version('Veeam Backup Catalog'))
 
     # => Previous versions are upgraded through update files and therefore, this is up-to-date
     return false if Gem::Version.new(new_resource.version) <= Gem::Version.new('9.5.3.0')
