@@ -1,8 +1,11 @@
 #
-# Cookbook Name:: veeam
-# Spec:: proxy
+# Cookbook:: veeam
+# Spec:: proxy_add
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# maintainer:: Exosphere Data, LLC
+# maintainer_email:: chef@exospheredata.com
+#
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
@@ -21,7 +24,8 @@ describe 'veeam::proxy_server' do
   context 'Install Veeam Backup and Recovery Console' do
     platforms = {
       'windows' => {
-        'versions' => %w(2012 2012R2 2016)
+        # 'versions' => %w(2012 2012R2 2016)
+        'versions' => %w(2016)
       }
     }
     platforms.each do |platform, components|
@@ -30,12 +34,12 @@ describe 'veeam::proxy_server' do
           before do
             Fauxhai.mock(platform: platform, version: version)
             allow(Mixlib::ShellOut).to receive(:new).and_return(shellout)
-            node.normal['veeam']['proxy']['vbr_server']   = 'veeam'
-            node.normal['veeam']['proxy']['vbr_username'] = 'admin'
-            node.normal['veeam']['proxy']['vbr_password'] = 'password'
-            node.normal['veeam']['proxy']['proxy_username'] = 'admin'
-            node.normal['veeam']['proxy']['proxy_password'] = 'password'
-            node.normal['veeam']['build'] = '9.5.0.1536'
+            node.override['veeam']['proxy']['vbr_server']   = 'veeam'
+            node.override['veeam']['proxy']['vbr_username'] = 'admin'
+            node.override['veeam']['proxy']['vbr_password'] = 'password'
+            node.override['veeam']['proxy']['proxy_username'] = 'admin'
+            node.override['veeam']['proxy']['proxy_password'] = 'password'
+            node.override['veeam']['build'] = '9.5.0.1536'
           end
           let(:shellout) do
             # Creating a double allows us to stub out the response from Mixlib::ShellOut
@@ -62,9 +66,15 @@ describe 'veeam::proxy_server' do
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
           let(:package_save_dir) { win_clean_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
-          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup_Replication_9.5.0.711.iso')) }
+          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup_Replication_10.0.0.4461.iso')) }
 
           it 'converges successfully' do
+            stubs_for_provider('veeam_proxy[Fauxhai]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(false_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Proxy is registered/).and_return(false_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Register Windows Host to VBR/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Register Veeam Proxy to VBR/).and_return(true_shell)
+            end
             expect { chef_run }.not_to raise_error
             expect(chef_run).to install_windows_feature('FS-FileServer')
             expect(chef_run).to install_windows_feature('Print-Server')
@@ -74,22 +84,34 @@ describe 'veeam::proxy_server' do
             expect(chef_run).to add_veeam_proxy(node['hostname'])
           end
           it 'Step into LWRP - veeam_proxy' do
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(false_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(false_shell)
+            stubs_for_provider('veeam_proxy[Fauxhai]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(false_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Proxy is registered/).and_return(false_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Register Windows Host to VBR/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Register Veeam Proxy to VBR/).and_return(true_shell)
+            end
             expect { chef_run }.not_to raise_error
             expect(chef_run).to run_powershell_script('Register Windows Server')
             expect(chef_run).to run_powershell_script('Register Veeam Proxy')
           end
           it 'Should not register the host if already done' do
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(true_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(true_shell)
+            stubs_for_provider('veeam_proxy[Fauxhai]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Proxy is registered/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Register Windows Host to VBR/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Register Veeam Proxy to VBR/).and_return(true_shell)
+            end
             expect { chef_run }.not_to raise_error
             expect(chef_run).to_not run_powershell_script('Register Windows Server')
             expect(chef_run).to_not run_powershell_script('Register Veeam Proxy')
           end
           it 'Should not register the host as Proxy if Registration disabled' do
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(true_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(true_shell)
+            stubs_for_provider('veeam_proxy[Fauxhai]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Proxy is registered/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Register Windows Host to VBR/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Register Veeam Proxy to VBR/).and_return(true_shell)
+            end
             expect { chef_run }.not_to raise_error
             expect(chef_run).to_not run_powershell_script('Register Windows Server')
             expect(chef_run).to_not run_powershell_script('Register Veeam Proxy')

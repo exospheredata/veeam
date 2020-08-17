@@ -1,11 +1,11 @@
 #
 # Cookbook:: veeam
-# Spec:: proxy_server_spec
+# Spec:: proxy_server
 #
 # maintainer:: Exosphere Data, LLC
 # maintainer_email:: chef@exospheredata.com
 #
-# Copyright:: 2018, Exosphere Data, LLC, All Rights Reserved.
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
@@ -25,12 +25,12 @@ describe 'veeam::proxy_server' do
         context "On #{platform} #{version}" do
           before do
             Fauxhai.mock(platform: platform, version: version)
-            node.normal['veeam']['proxy']['vbr_server']   = 'veeam'
-            node.normal['veeam']['proxy']['vbr_username'] = 'admin'
-            node.normal['veeam']['proxy']['vbr_password'] = 'password'
-            node.normal['veeam']['proxy']['proxy_username'] = 'admin'
-            node.normal['veeam']['proxy']['proxy_password'] = 'password'
-            node.normal['veeam']['build'] = '9.5.0.1536'
+            node.override['veeam']['proxy']['vbr_server']   = 'veeam'
+            node.override['veeam']['proxy']['vbr_username'] = 'admin'
+            node.override['veeam']['proxy']['vbr_password'] = 'password'
+            node.override['veeam']['proxy']['proxy_username'] = 'admin'
+            node.override['veeam']['proxy']['proxy_password'] = 'password'
+            node.override['veeam']['build'] = '9.5.0.1536'
           end
           let(:runner) do
             ChefSpec::SoloRunner.new(platform: platform, version: version, file_cache_path: '/tmp/cache')
@@ -49,12 +49,12 @@ describe 'veeam::proxy_server' do
           end
 
           it 'register using IP Address' do
-            node.normal['veeam']['proxy']['use_ip_address'] = true
+            node.override['veeam']['proxy']['use_ip_address'] = true
             expect(chef_run).to add_veeam_proxy(node['ipaddress'])
           end
 
           it 'does not register if attribute configured to false' do
-            node.normal['veeam']['proxy']['register'] = false
+            node.override['veeam']['proxy']['register'] = false
             expect(chef_run).to_not add_veeam_proxy(node['hostname'])
           end
         end

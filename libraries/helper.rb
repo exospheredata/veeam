@@ -1,4 +1,4 @@
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Library:: helper
 #
 # Author:: Jeremy Goodrum
@@ -7,7 +7,7 @@
 # Version:: 0.1.0
 # Date:: 2017-02-07
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,32 +44,48 @@ module Veeam
     def package_list(version)
       case version.to_s # to_s to make sure someone didn't pass us an int
       when '9.0' then {
-        'package_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.0.0.902.iso',
+        'package_url' => 'http://download.veeam.com/VeeamBackup&Replication_9.0.0.902.iso',
         'package_checksum' => '21f9d2c318911e668511990b8bbd2800141a7764cc97a8b78d4c2200c1225c88'
       }
       when '9.5' then {
-        'package_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.711.iso',
+        'package_url' => 'http://download.veeam.com/VeeamBackup&Replication_9.5.0.711.iso',
         'package_checksum' => 'af3e3f6db9cb4a711256443894e6fb56da35d48c0b2c32d051960c52c5bc2f00'
       }
       when '9.5.0.711' then {
-        'package_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.711.iso',
+        'package_url' => 'http://download.veeam.com/VeeamBackup&Replication_9.5.0.711.iso',
         'package_checksum' => 'af3e3f6db9cb4a711256443894e6fb56da35d48c0b2c32d051960c52c5bc2f00'
       }
       when '9.5.0.1038' then {
-        'package_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.1038.Update2.iso',
+        'package_url' => 'http://download.veeam.com/VeeamBackup&Replication_9.5.0.1038.Update2.iso',
         'package_checksum' => '180b142c1092c89001ba840fc97158cc9d3a37d6c7b25c93a311115b33454977'
       }
       when '9.5.0.1536' then {
-        'package_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.iso',
+        'package_url' => 'http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.iso',
         'package_checksum' => '5020ef015e4d9ff7070d43cf477511a2b562d8044975552fd08f82bdcf556a43'
       }
       when '9.5.0.1922' then {
-        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.iso',
+        'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.iso',
         'package_checksum' => '9a6fa7d857396c058b2e65f20968de56f96bc293e0e8fd9f1a848c7d71534134'
       }
       when '9.5.4.2615' then {
-        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso',
+        'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso',
         'package_checksum' => 'ecc27bbcf49104861566782701dca42375b324b4710e2fa79b5f8068c31c4494'
+      }
+      when '9.5.4.2866' then {
+        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.4.2866.Update4b_20191210.iso',
+        'package_checksum' => 'cfc41596154563f60b74320634589721fd1110c87e04632068bc5234aada342e'
+      }
+      when '10.0' then {
+        'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso',
+        'package_checksum' => '26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650'
+      }
+      when '10.0.0.4461' then {
+        'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso',
+        'package_checksum' => '26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650'
+      }
+      when '10.0.1.4854' then {
+        'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_10.0.1.4854_20200723.iso',
+        'package_checksum' => '378ae6a95ca683a12d9872eec7596bf2b17848c880812484e6e9e1dd55ec2dad'
       }
       end
     end
@@ -85,36 +101,48 @@ module Veeam
     def update_list(version)
       case version.to_s # to_s to make sure someone didn't pass us an int
       when '9.0' then {
-        'update_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.0.0.902.iso',
+        'update_url' => 'http://download.veeam.com/VeeamBackup&Replication_9.0.0.902.iso',
         'update_checksum' => '21f9d2c318911e668511990b8bbd2800141a7764cc97a8b78d4c2200c1225c88'
       }
       when '9.5' then {
-        'update_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.711.iso',
+        'update_url' => 'http://download.veeam.com/VeeamBackup&Replication_9.5.0.711.iso',
         'update_checksum' => 'af3e3f6db9cb4a711256443894e6fb56da35d48c0b2c32d051960c52c5bc2f00'
       }
       when '9.5.0.711' then {
-        'update_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.711.iso',
+        'update_url' => 'http://download.veeam.com/VeeamBackup&Replication_9.5.0.711.iso',
         'update_checksum' => 'af3e3f6db9cb4a711256443894e6fb56da35d48c0b2c32d051960c52c5bc2f00'
       }
       when '9.5.0.823' then {
-        'update_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.0.823_Update1.zip',
+        'update_url' => 'https://download.veeam.com/VeeamBackup&Replication_9.5.0.823_Update1.zip',
         'update_checksum' => 'c07bdfb3b90cc609d21ba94584ba19d8eaba16faa31f74ad80814ec9288df492'
       }
       when '9.5.0.1038' then {
-        'update_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.1038.Update2.zip',
+        'update_url' => 'http://download.veeam.com/VeeamBackup&Replication_9.5.0.1038.Update2.zip',
         'update_checksum' => 'd800bf5414f1bde95fba5fddbd86146c75a5a2414b967404792cc32841cb4ffb'
       }
       when '9.5.0.1536' then {
-        'update_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.zip',
+        'update_url' => 'http://download.veeam.com/VeeamBackup&Replication_9.5.0.1536.Update3.zip',
         'update_checksum' => '38ed6a30aa271989477684fdfe7b98895affc19df7e1272ee646bb50a059addc'
       }
       when '9.5.0.1922' then {
-        'update_url' => 'http://download2.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.zip',
+        'update_url' => 'http://download.veeam.com/VeeamBackup&Replication_9.5.0.1922.Update3a.zip',
         'update_checksum' => 'f6b3fc0963b09362c535ef49691c51d368266cc91d6833c80c70342161bb7123'
       }
       when '9.5.4.2615' then {
-        'package_url' => 'https://download2.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso',
+        'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_9.5.4.2615.Update4.iso',
         'package_checksum' => 'ecc27bbcf49104861566782701dca42375b324b4710e2fa79b5f8068c31c4494'
+      }
+      when '9.5.4.2866' then {
+        'update_url' => 'https://download.veeam.com/VeeamBackup&Replication_9.5.4.2866.Update4b_20191210.zip',
+        'update_checksum' => 'e0b29d2585ba2adb0914976bf83d7f0e11c2db7365af9ff43a33cb36b23425c2'
+      }
+      when '10.0.0.4461' then {
+        'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_10.0.0.4461.iso',
+        'package_checksum' => '26ddcc3df046af1ca1458b3040fc9024b4361ae1e51e1cf4516afe53fb024650'
+      }
+      when '10.0.1.4854' then {
+        'package_url' => 'https://download.veeam.com/VeeamBackup&Replication_10.0.1.4854_20200723.iso',
+        'package_checksum' => '378ae6a95ca683a12d9872eec7596bf2b17848c880812484e6e9e1dd55ec2dad'
       }
       end
     end
@@ -124,60 +152,108 @@ module Veeam
       when '9.0' then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2012 (x64)' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2012 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
-        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SqlExpress\SQLEXPR_x64_ENU.exe' }
       }
       when /9.0.0.\d+/ then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2012 (x64)' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2012 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
-        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SqlExpress\SQLEXPR_x64_ENU.exe' }
       }
       when '9.5' then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
-        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SqlExpress\SQLEXPR_x64_ENU.exe' }
       }
       when /9.5.0.\d+/ then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
-        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+        'SQL' => { 'Microsoft SQL Server 2012 (64-bit)' => 'SqlExpress\SQLEXPR_x64_ENU.exe' }
       }
       when /9.5.4.\d+/ then {
         '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
         '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
-        'SQL' => { 'Microsoft SQL Server 2016 (64-bit)' => 'SQLEXPR_x64_ENU.exe' }
+        '2' => { 'Microsoft Report Viewer 2015 Runtime' => '..\\ReportViewer.msi' },
+        'SQL' => { 'Microsoft SQL Server 2016 (64-bit)' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe' }
+      }
+      when '10.0' then {
+        '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
+        '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
+        'SQL' => { 'Microsoft SQL Server 2016 (64-bit)' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe' }
+      }
+      when /10.0.\d+/ then {
+        '0' => { 'Microsoft System CLR Types for SQL Server 2014' => 'SQLSysClrTypes.msi' },
+        '1' => { 'Microsoft SQL Server 2014 Management Objects  (x64)' => 'SharedManagementObjects.msi' },
+        'SQL' => { 'Microsoft SQL Server 2016 (64-bit)' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe' }
+      }
+      end
+    end
+
+    def dotnet_list(version)
+      case version.to_s # to_s to make sure someone didn't pass us an int
+      when '9.0' then {
+        # Microsoft .NET Framework 4.5.2
+        '379893' => 'NDP452-KB2901907-x86-x64-AllOS-ENU.exe'
+      }
+      when /9.\d+/ then {
+        '379893' => 'NDP452-KB2901907-x86-x64-AllOS-ENU.exe'
+      }
+      when '10.0' then {
+        '461814' => 'NDP472-KB4054530-x86-x64-AllOS-ENU.exe'
+      }
+      when /10.\d+/ then {
+        '461814' => 'NDP472-KB4054530-x86-x64-AllOS-ENU.exe'
+      }
+      end
+    end
+
+    def sqlexpress_list(version)
+      case version.to_s # to_s to make sure someone didn't pass us an int
+      when '9.0' then {
+        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+      }
+      when /9.0.0.\d+/ then {
+        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+      }
+      when '9.5' then {
+        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+      }
+      when /9.5.0.\d+/ then {
+        'Microsoft SQL Server 2012 (64-bit)' => { 'installer' => 'SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL11.SQLEXPRESS' }
+      }
+      when /9.5.4.\d+/ then {
+        'Microsoft SQL Server 2016 (64-bit)' => { 'installer' => 'SqlExpress\2016SP1\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL13.SQLEXPRESS' }
+      }
+      when '10.0' then {
+        'Microsoft SQL Server 2016 (64-bit)' => { 'installer' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL13.SQLEXPRESS' }
+      }
+      when /10.0.\d+/ then {
+        'Microsoft SQL Server 2016 (64-bit)' => { 'installer' => 'SqlExpress\2016SP2\SQLEXPR_x64_ENU.exe', 'reg_key' => 'MSSQL13.SQLEXPRESS' }
       }
       end
     end
 
     def explorers_list(version)
-      case version.to_s # to_s to make sure someone didn't pass us an int
-      when '9.0' then {
-        'ActiveDirectory' => 'Veeam Explorer for Microsoft Active Directory',
-        'SQL' => 'Veeam Explorer for Microsoft SQL Server',
-        'Exchange' => 'Veeam Explorer for Microsoft Exchange',
-        'SharePoint' => 'Veeam Explorer for Microsoft SharePoint',
-        'Oracle' => 'Veeam Explorer for Oracle'
+      case version.to_s # to_s to make sure someone didn't pass us an in
+      when /9.\d+/ then {
+        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory' },
+        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server' },
+        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange' },
+        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint' },
+        'Oracle' => { name: 'Veeam Explorer for Oracle' }
       }
-      when '9.5' then {
-        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '9.5.0.836' },
-        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '9.5.0.836' },
-        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '9.5.0.836' },
-        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '9.5.0.836' },
-        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '9.5.0.836' }
+      when '10.0' then {
+        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory' },
+        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server' },
+        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange' },
+        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint' },
+        'Oracle' => { name: 'Veeam Explorer for Oracle' }
       }
-      when /9.5.4.\d+/ then {
-        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '9.6.4.1053' },
-        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '9.6.4.1053' },
-        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '9.6.4.1053' },
-        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '9.6.4.1053' },
-        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '9.6.4.1053' }
-      }
-      when /9.5.0.\d+/ then {
-        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory', version: '9.5.0.836' },
-        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server', version: '9.5.0.836' },
-        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange', version: '9.5.0.836' },
-        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint', version: '9.5.0.836' },
-        'Oracle' => { name: 'Veeam Explorer for Oracle', version: '9.5.0.836' }
+      when /10.0.\d+/ then {
+        'ActiveDirectory' => { name: 'Veeam Explorer for Microsoft Active Directory' },
+        'SQL' => { name: 'Veeam Explorer for Microsoft SQL Server' },
+        'Exchange' => { name: 'Veeam Explorer for Microsoft Exchange' },
+        'SharePoint' => { name: 'Veeam Explorer for Microsoft SharePoint' },
+        'Oracle' => { name: 'Veeam Explorer for Oracle' }
       }
       end
     end
@@ -259,7 +335,6 @@ module Veeam
           Mount-DiskImage -ImagePath "#{downloaded_file_name}"
         EOH
         action :run
-        guard_interpreter :powershell_script
         not_if "[boolean] (Get-DiskImage -ImagePath '#{downloaded_file_name}').DevicePath"
       end
     end
@@ -278,9 +353,10 @@ module Veeam
         not_if { ::File.exist?(update_path) }
       end
 
-      windows_zipfile win_clean_path(::File.join(install_media_path, '/Updates')) do
-        source downloaded_file_name
-        action :unzip
+      archive_file win_clean_path(::File.join(install_media_path, '/Updates')) do
+        destination win_clean_path(::File.join(install_media_path, '/Updates'))
+        path downloaded_file_name
+        action :extract
         not_if { ::File.exist?(update_path) }
       end
 
@@ -294,7 +370,6 @@ module Veeam
           Dismount-DiskImage -ImagePath "#{downloaded_file_name}"
         EOH
         action :run
-        guard_interpreter :powershell_script
         only_if "[boolean] (Get-DiskImage -ImagePath '#{downloaded_file_name}').DevicePath"
       end
     end

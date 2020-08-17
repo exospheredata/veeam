@@ -1,8 +1,11 @@
 #
-# Cookbook Name:: veeam
-# Spec:: proxy
+# Cookbook:: veeam
+# Spec:: proxy_remove
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# maintainer:: Exosphere Data, LLC
+# maintainer_email:: chef@exospheredata.com
+#
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
@@ -29,9 +32,9 @@ describe 'veeam::proxy_remove' do
         context "On #{platform} #{version}" do
           before do
             Fauxhai.mock(platform: platform, version: version)
-            node.normal['veeam']['proxy']['vbr_server']   = 'veeam'
-            node.normal['veeam']['proxy']['vbr_username'] = 'admin'
-            node.normal['veeam']['proxy']['vbr_password'] = 'password'
+            node.override['veeam']['proxy']['vbr_server']   = 'veeam'
+            node.override['veeam']['proxy']['vbr_username'] = 'admin'
+            node.override['veeam']['proxy']['vbr_password'] = 'password'
           end
           let(:shellout) do
             # Creating a double allows us to stub out the response from Mixlib::ShellOut
@@ -58,38 +61,53 @@ describe 'veeam::proxy_remove' do
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
           let(:package_save_dir) { win_clean_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
-          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup_Replication_9.5.0.711.iso')) }
+          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup_Replication_10.0.0.4461.iso')) }
 
           it 'converges successfully' do
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(true_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(true_shell)
-            expect { chef_run }.not_to raise_error
+            stubs_for_provider('veeam_proxy[Fauxhai]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Proxy is registered/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Unregister Windows Host from VBR/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Unregister Veeam Proxy from VBR/).and_return(true_shell)
+            end
+            # expect { chef_run }.not_to raise_error
             expect(chef_run).to remove_veeam_proxy(node['hostname'])
           end
           it 'Step into LWRP - veeam_proxy' do
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(true_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(true_shell)
+            stubs_for_provider('veeam_proxy[Fauxhai]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Proxy is registered/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Unregister Windows Host from VBR/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Unregister Veeam Proxy from VBR/).and_return(true_shell)
+            end
             expect { chef_run }.not_to raise_error
             expect(chef_run).to run_powershell_script('Remove Veeam Proxy')
             expect(chef_run).to run_powershell_script('Remove Windows Server')
           end
           it 'Should not unregister the host if not found in Veeam' do
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(false_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(false_shell)
+            stubs_for_provider('veeam_proxy[Fauxhai]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(false_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Proxy is registered/).and_return(false_shell)
+            end
             expect { chef_run }.not_to raise_error
             expect(chef_run).to_not run_powershell_script('Remove Veeam Proxy')
             expect(chef_run).to_not run_powershell_script('Remove Windows Server')
           end
           it 'Should unregister the host but skip the Proxy if not configured' do
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(true_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(false_shell)
+            stubs_for_provider('veeam_proxy[Fauxhai]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Proxy is registered/).and_return(false_shell)
+            end
             expect { chef_run }.not_to raise_error
             expect(chef_run).to_not run_powershell_script('Remove Veeam Proxy')
             expect(chef_run).to run_powershell_script('Remove Windows Server')
           end
           it 'Should remove the Proxy but skip Host if not configured' do
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Host is registered/, environment_var).and_return(false_shell)
-            allow(Mixlib::ShellOut).to receive(:new).with(/Check if Proxy is registered/, environment_var).and_return(true_shell)
+            stubs_for_provider('veeam_proxy[Fauxhai]') do |provider|
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Host is registered/).and_return(false_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Check if Proxy is registered/).and_return(true_shell)
+              allow(provider).to receive(:shell_out_compacted).with(/Unregister Veeam Proxy from VBR/).and_return(true_shell)
+            end
             expect { chef_run }.not_to raise_error
             expect(chef_run).to run_powershell_script('Remove Veeam Proxy')
             expect(chef_run).to_not run_powershell_script('Remove Windows Server')

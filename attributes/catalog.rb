@@ -1,8 +1,8 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Attributes:: catalog
 #
-# Copyright (c) 2017 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 
 default['veeam']['catalog']['install_dir'] = 'C:\\Program Files\\Veeam\\Backup and Replication\\'
 default['veeam']['catalog']['vm_catalogpath'] = nil

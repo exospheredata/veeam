@@ -1,8 +1,11 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Spec:: explorer
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# maintainer:: Exosphere Data, LLC
+# maintainer_email:: chef@exospheredata.com
+#
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
@@ -32,8 +35,8 @@ describe 'veeam::server_with_console' do
             allow_any_instance_of(Chef::DSL::RegistryHelper)
               .to receive(:registry_get_values)
               .and_return([{}, {}, {}, {}, {}, {}, { name: 'Release', data: 379893 }])
-            node.normal['veeam']['server']['accept_eula'] = true
-            node.normal['veeam']['server']['explorers'] = %w(ActiveDirectory Exchange)
+            node.override['veeam']['server']['accept_eula'] = true
+            node.override['veeam']['server']['explorers'] = %w(ActiveDirectory Exchange)
             shellout = double(run_command: nil, error!: nil, stdout: output, stderr: double(empty?: true), exitstatus: 0, live_stream: nil)
             allow(Mixlib::ShellOut).to receive(:new).and_return(shellout)
             allow(shellout).to receive(:live_stream=).and_return(nil)
@@ -47,7 +50,7 @@ describe 'veeam::server_with_console' do
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
           let(:package_save_dir) { win_clean_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
-          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup&Replication_9.5.0.711.iso')) }
+          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup&Replication_10.0.0.4461.iso')) }
 
           it 'converges successfully' do
             expect { chef_run }.not_to raise_error

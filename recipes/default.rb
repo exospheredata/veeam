@@ -1,5 +1,8 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Recipe:: default
 #
-# Copyright (c) 2017 Exosphere Data LLC, All Rights Reserved.
+# maintainer:: Exosphere Data, LLC
+# maintainer_email:: chef@exospheredata.com
+#
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.

@@ -1,5 +1,44 @@
 # Change log information for Veeam Cookbook
 
+## Version 4.0.3
+2020-08-14
+
+UPDATE: Library::Helper to include 10.0.1.4854 (10.0a) installation
+UPDATE: Resource::Console to correct product version to look at individual solution
+UPDATE: Resource::Catalog to correct product version to look at individual solution
+
+## Version 4.0.2
+2020-08-12
+
+Updated - Changed SQL authentication mode from "Mixed" to "Windows"
+Updated the upgrade process to handle incremental upgrades and setting the correct build_version based on the package_url
+
+## Version 4.0.1
+2020-08-6
+
+Added support for Veeam 9.5.4b
+
+## Version 4.0.0
+2020-07-15
+
+Major update to include support for Veeam 10.0.0 including changes to the method for installation of SQL Express and supported .NET Framework
+
+### Included:
+
+- UPDATE: Libraries::Helper to support v10.0+
+- UPDATE: Resources::Prerequisites to handle new library methods to look up dotnet and sqlexpress versions
+- UPDATE: Templates::sql_build_script to pass sqlexpress media path from helper
+- ADD:    Inspec::10.0.0.4461 tests
+- UPDATE: Spec::lwrps/veeam_prerequisites_spec to support Chef 13+
+- UPDATE: Resources::Host to add script marker comments for stubs
+- UPDATE: Resources::Proxy to add script marker comments for stubs
+- UPDATE: Unit tests with new shell_out_compacted method for command stubbing
+- UPDATE: all files to support updated rubcop and foodcritic standards
+- UPDATE: Helpers::ExtractInstaller to use archive_file resource
+- UPDATE: CHANGELOG.md
+- UPDATE: README.md
+- BUMP:   Metadata 4.0.0
+
 ## Version 3.0.2
 2020-07-24
 
@@ -9,6 +48,42 @@ Minor fix update for SQL Express installation on domain joined computer.
 2020-07-14
 
 Minor fix update to include `delay_min 1` to all reboot resources to cover a chef bug that lets some test-kitchen environments crash.
+
+## Version 3.0.0
+2019-01-22
+
+Major update to include support for Veeam 9.5.4 including changes to the method for installation and upgrades
+
+### Included:
+
+- UPDATE: Kitchen.yml typo
+- UPDATE: Libraries::Helper to enhance prerequisites versions
+- UPDATE: Libraries::Helper to include support to ignore_errors in validate_cmd method when called from method find_current_veeam_version
+- UPDATE: Libraries::Helper to include version information for explorers and win_clean_path helper
+- UPDATE: Libraries::Helper to include links for 9.5.4
+
+- UPDATE: Recipes::Catalog to include calling veeam_upgrade by default
+- UPDATE: Recipes::Console to include veaam_upgrade
+- UPDATE: Recipes::HostMgmt to support 9.5.4
+- ADD: Recipes::Prerequisites
+- UPDATE: Recipes::ProxyServer to support 9.5.4
+- UPDATE: Recipes::Server to support 9.5.4
+- UPDATE: Recipes::ServerWithConsole to include upgrades and build version handling
+- UPDATE: Recipes::StandaloneComplete to support 9.5.4
+
+- UPDATE: Resources to use win_clean_path instead of win_friendly_path from Windows Cookbook
+- UPDATE: Resources::Catalog to handle installation of 9.5.4 media and upgrades of the current version from 9.5.0 to 9.5.4 when version is selected
+- UPDATE: Resources::Console to support upgrading and installing 9.5.4
+- UPDATE: Resources::Explorer to support 9.5.4 version upgrades
+- UPDATE: Resources::Prerequisites to support new version of SQL Express installation based on the build_version
+- UPDATE: Resources::Server to enable support for upgrading the version to 9.5.4
+- UPDATE: Resources::Upgrade to initiate an upgrade when the Veeam Backup Catalog version does not match the requested build version
+
+- UPDATE: Templates::SqlBuildScript to handle installation of SQL Express 2016 when performing a new installation of 9.5 Update 4
+- ADD: Test::Inspec/9.5.4
+
+- UPDATE: README
+- BUMP: Metadata to Version 3.0.0
 
 ## Version 2.1.1
 2018-08-25

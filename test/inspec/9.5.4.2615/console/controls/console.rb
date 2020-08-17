@@ -9,6 +9,6 @@ control 'console-feature-installed' do
 
   describe package('Veeam Backup & Replication Console') do
     it { should be_installed }
-    its('version') { should eq '9.5.4.2399' }
+    its('version') { should eq '9.5.4.2615' }
   end
 end

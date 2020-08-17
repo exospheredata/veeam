@@ -1,12 +1,15 @@
 #
-# Cookbook Name:: veeam
-# Spec:: server
+# Cookbook:: veeam
+# Spec:: prerequisites
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# maintainer:: Exosphere Data, LLC
+# maintainer_email:: chef@exospheredata.com
+#
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
-describe 'veeam::server' do
+describe 'veeam::prerequisites' do
   before do
     mock_windows_system_framework # Windows Framework Helper from 'spec/windows_helper.rb'
     stub_command('sc.exe query W3SVC').and_return 1
@@ -31,18 +34,17 @@ describe 'veeam::server' do
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
           let(:package_save_dir) { win_clean_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
-          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup&Replication_9.5.0.711.iso')) }
+          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup&Replication_10.0.0.4461.iso')) }
 
           it 'converges successfully' do
             expect(chef_run).to install_veeam_prerequisites('Install Veeam Prerequisites')
-            expect(chef_run).to install_veeam_server('Install Veeam Backup Server')
             expect { chef_run }.not_to raise_error
           end
           it 'Step into LWRP - veeam_prerequisites' do
             expect(chef_run).to create_directory(package_save_dir)
             expect(chef_run).to create_remote_file(downloaded_file_name)
             expect(chef_run).to run_powershell_script('Load Veeam media')
-            expect(chef_run).to run_ruby_block('Install the .NET 4.5.2')
+            expect(chef_run).to run_ruby_block('Install the .NET')
             expect(chef_run).to run_ruby_block('Install the SQL Management Tools')
             expect(chef_run).to create_template(win_clean_path(::File.join(Chef::Config[:file_cache_path], 'ConfigurationFile.ini')))
             expect(chef_run).to run_ruby_block('Install the SQL Express')
@@ -61,9 +63,11 @@ describe 'veeam::server' do
           it 'should skip processing if everything is installed' do
             allow_any_instance_of(Chef::Provider).to receive(:is_package_installed?)
               .and_return(true)
+            allow_any_instance_of(Chef::DSL::RegistryHelper).to receive(:registry_key_exists?)
+              .and_return(true)
             allow_any_instance_of(Chef::DSL::RegistryHelper)
               .to receive(:registry_get_values)
-              .and_return([{}, {}, {}, {}, {}, {}, { name: 'Release', data: 379893 }])
+              .and_return([{}, {}, {}, {}, {}, {}, { name: 'Release', data: 461814 }])
             expect(chef_run).not_to create_directory(package_save_dir)
           end
           it 'returns an Argument error when invalid Veeam version supplied' do

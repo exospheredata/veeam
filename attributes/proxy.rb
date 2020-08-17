@@ -1,8 +1,8 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Attributes:: proxy
 #
-# Copyright (c) 2017 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 
 default['veeam']['proxy']['vbr_server']     = nil
 default['veeam']['proxy']['vbr_port']       = 9392

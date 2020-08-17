@@ -1,11 +1,11 @@
 #
 # Cookbook:: veeam
-# Spec:: host_mgmt_spec
+# Spec:: host_mgmt
 #
 # maintainer:: Exosphere Data, LLC
 # maintainer_email:: chef@exospheredata.com
 #
-# Copyright:: 2018, Exosphere Data, LLC, All Rights Reserved.
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
@@ -25,15 +25,15 @@ describe 'veeam::host_mgmt' do
         context "On #{platform} #{version}" do
           before do
             Fauxhai.mock(platform: platform, version: version)
-            node.normal['veeam']['host']['vbr_server']   = 'veeam'
-            node.normal['veeam']['host']['vbr_username'] = 'admin'
-            node.normal['veeam']['host']['vbr_password'] = 'password'
-            node.normal['veeam']['host']['host_username'] = 'admin'
-            node.normal['veeam']['host']['host_password'] = 'password'
-            node.normal['veeam']['build'] = '9.5.0.1536'
-            node.normal['veeam']['host']['server'] = 'vc1'
-            node.normal['veeam']['host']['type']   = 'vmware'
-            node.normal['veeam']['host']['action'] = nil
+            node.override['veeam']['host']['vbr_server']   = 'veeam'
+            node.override['veeam']['host']['vbr_username'] = 'admin'
+            node.override['veeam']['host']['vbr_password'] = 'password'
+            node.override['veeam']['host']['host_username'] = 'admin'
+            node.override['veeam']['host']['host_password'] = 'password'
+            node.override['veeam']['build'] = '9.5.0.1536'
+            node.override['veeam']['host']['server'] = 'vc1'
+            node.override['veeam']['host']['type']   = 'vmware'
+            node.override['veeam']['host']['action'] = 'add'
           end
           let(:runner) do
             ChefSpec::SoloRunner.new(platform: platform, version: version, file_cache_path: '/tmp/cache')
@@ -50,7 +50,7 @@ describe 'veeam::host_mgmt' do
           end
 
           it 'removes the Veeam Host Server' do
-            node.normal['veeam']['host']['action'] = 'remove'
+            node.override['veeam']['host']['action'] = 'remove'
             expect { chef_run }.not_to raise_error
             expect(chef_run).to install_veeam_prerequisites('Install Veeam Prerequisites')
             expect(chef_run).to install_veeam_console('Install Veeam Backup console')

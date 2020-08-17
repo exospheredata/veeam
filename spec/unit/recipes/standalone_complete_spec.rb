@@ -1,8 +1,11 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Spec:: standalone_complete
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# maintainer:: Exosphere Data, LLC
+# maintainer_email:: chef@exospheredata.com
+#
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
@@ -23,7 +26,7 @@ describe 'veeam::standalone_complete' do
         context "On #{platform} #{version}" do
           before do
             Fauxhai.mock(platform: platform, version: version)
-            node.normal['veeam']['build'] = '9.5.0.1536'
+            node.override['veeam']['build'] = '9.5.0.1536'
           end
           let(:runner) do
             ChefSpec::SoloRunner.new(platform: platform, version: version, file_cache_path: '/tmp/cache')

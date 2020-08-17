@@ -1,13 +1,13 @@
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Resource:: host
 #
 # Author:: Jeremy Goodrum
 # Email:: chef@exospheredata.com
 #
 # Version:: 1.0.0
-# Date:: 2018-08-23
+# Date:: 2018-04-29
 #
-# Copyright (c) 2018 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 
 default_action :add
 
-property :hostname, String, name_property: true, required: true
+property :hostname, String, name_property: true
 
 # VBR Server Connection Properties
 property :vbr_server, String, required: true
@@ -52,19 +52,20 @@ action :add do
   no_console_error = 'This resource requires that the Veeam Backup & Replication Console be installed on this host'
   raise ArgumentError, no_console_error unless is_package_installed?('Veeam Backup & Replication Console')
 
-  return false if server_currently_registered
+  return false if currently_registered?
 
   raise ArgumentError, 'The Host Username is a required attribute' if new_resource.host_username.nil?
   raise ArgumentError, 'The Host Password is a required attribute' if new_resource.host_password.nil?
 
   powershell_script 'Register Host Server' do
     code <<-EOH
+      # Register Host to VBR
       Add-PSSnapin VeeamPSSnapin
       try {
         Connect-VBRServer `
           -Server #{new_resource.vbr_server} `
           -User #{new_resource.vbr_username} `
-          -Password #{new_resource.vbr_password} `
+          -Password "#{new_resource.vbr_password}" `
           -Port #{new_resource.vbr_server_port} `
           -ErrorAction Stop
 
@@ -75,7 +76,7 @@ action :add do
         if (!$VbrCredentials){
           $VbrCredentials = (Add-VBRCredentials `
             -User #{new_resource.host_username} `
-            -Password #{new_resource.host_password} `
+            -Password "#{new_resource.host_password}" `
             -Description "ADDED BY CHEF: #{new_resource.host_type.upcase} Server Credentials" `
             -Type Windows)
         }
@@ -83,19 +84,21 @@ action :add do
         $VbrServer = Get-VBRServer -Name #{new_resource.hostname}
         if(!$VbrServer) {
           $arguments  = " -Name #{new_resource.hostname}"
-          $arguments += " -Port #{new_resource.host_port}"
           $arguments += " -Description '#{new_resource.description ? "ADDED by CHEF: #{new_resource.description}" : "ADDED by CHEF: #{new_resource.host_type.upcase} Server"}'"
           $arguments += " -Credentials $VbrCredentials"
 
           switch("#{new_resource.host_type}"){
             "vmware" {
               $command = "Add-VBRvCenter"
+              $arguments += " -Port #{new_resource.host_port}"
             }
             "esxi" {
               $command = "Add-VBRESXi"
+              $arguments += " -Port #{new_resource.host_port}"
             }
             "esx_legacy" {
               $command = "Add-VBRESX"
+              $arguments += " -Port #{new_resource.host_port}"
             }
             "hyperv" {
               $command = "Add-VBRHvHost"
@@ -132,7 +135,6 @@ action :add do
       }
     EOH
     action :run
-    not_if { server_currently_registered }
   end
 end
 
@@ -143,16 +145,17 @@ action :remove do
   no_console_error = 'This resource requires that the Veeam Backup & Replication Console be installed on this host'
   raise ArgumentError, no_console_error unless is_package_installed?('Veeam Backup & Replication Console')
 
-  return false unless server_currently_registered
+  return false unless currently_registered?
 
   powershell_script 'Remove Host Server' do
     code <<-EOH
+      # Unregister Host to VBR
       Add-PSSnapin VeeamPSSnapin
       try {
         Connect-VBRServer `
           -Server #{new_resource.vbr_server} `
           -User #{new_resource.vbr_username} `
-          -Password #{new_resource.vbr_password} `
+          -Password "#{new_resource.vbr_password}" `
           -Port #{new_resource.vbr_server_port} `
           -ErrorAction Stop
 
@@ -167,16 +170,11 @@ action :remove do
       }
     EOH
     action :run
-    only_if { server_currently_registered }
   end
 end
 
 action_class do
-  def whyrun_supported?
-    true
-  end
-
-  def server_currently_registered
+  def currently_registered?
     cmd_str = <<-EOH
       # Check if Host is registered
       Add-PSSnapin VeeamPSSnapin
@@ -184,7 +182,7 @@ action_class do
         Connect-VBRServer `
           -Server #{new_resource.vbr_server} `
           -User #{new_resource.vbr_username} `
-          -Password #{new_resource.vbr_password} `
+          -Password "#{new_resource.vbr_password}" `
           -Port #{new_resource.vbr_server_port} `
           -ErrorAction Stop
         $VbrServer = Get-VBRServer -Name "#{new_resource.name}" -ErrorAction SilentlyContinue

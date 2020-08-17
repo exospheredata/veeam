@@ -1,14 +1,13 @@
-
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Resource:: console
 #
 # Author:: Jeremy Goodrum
 # Email:: chef@exospheredata.com
 #
-# Version:: 0.2.0
-# Date:: 2017-02-07
+# Version:: 1.0.0
+# Date:: 2018-04-29
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,11 +29,11 @@ property :share_path, String
 property :package_url, String
 property :package_checksum, String
 
-property :accept_eula, [TrueClass, FalseClass], default: false, required: true
+property :accept_eula, [true, false], required: true
 property :install_dir, String
 
 property :version, String, required: true
-property :keep_media, [TrueClass, FalseClass], default: false
+property :keep_media, [true, false], default: false
 
 # We need to include the windows helpers to keep things dry
 ::Chef::Provider.send(:include, Windows::Helper)
@@ -46,10 +45,9 @@ action :install do
   # We will use the Windows Helper 'is_package_installed?' to see if the Console is installed.  If it is installed, then
   # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
   if is_package_installed?('Veeam Backup & Replication Console')
-    installed_version = installed_packages['Veeam Backup & Replication Console'][:version]
 
     # => If the build version and the installed version match then return up-to-date
-    return false if Gem::Version.new(new_resource.version) == Gem::Version.new(installed_version)
+    return false if Gem::Version.new(new_resource.version) <= Gem::Version.new(find_current_veeam_version('Veeam Backup & Replication Console'))
 
     # => Previous versions are upgraded through update files and therefore, this is up-to-date
     return false if Gem::Version.new(new_resource.version) <= Gem::Version.new('9.5.3.0')
@@ -117,10 +115,6 @@ action :install do
 end
 
 action_class do
-  def whyrun_supported?
-    true
-  end
-
   def perform_console_install(install_media_path)
     Chef::Log.debug 'Installing Veeam Backup console service... begin'
     # In this case, we have many possible combinations of extra arugments that would need to be passed to the installer.

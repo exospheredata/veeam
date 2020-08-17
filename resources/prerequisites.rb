@@ -1,13 +1,13 @@
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Resource:: prerequisites
 #
 # Author:: Jeremy Goodrum
 # Email:: chef@exospheredata.com
 #
-# Version:: 0.2.0
-# Date:: 2017-02-13
+# Version:: 1.0.0
+# Date:: 2018-04-29
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ property :package_url, String
 property :package_checksum, String
 
 property :version, String, required: true
-property :install_sql, [TrueClass, FalseClass], default: false
+property :install_sql, [true, false], default: false
 
 # We need to include the windows helpers to keep things dry
 ::Chef::Provider.send(:include, Windows::Helper)
@@ -49,25 +49,36 @@ action :install do
   # Halt this process now.  There is no URL for the package.
   raise ArgumentError, 'You must provide a package URL or choose a valid version' unless new_resource.package_url
 
-  base_version = /(\d+.\d+)/.match(new_resource.version).captures[0]
-  [base_version, new_resource.version].each do |test_version|
-    # Determine if all of the Veeam pre-requisites are installed and if so, then skip the processing.
-    prerequisites_required  = []
-    installed_prerequisites = []
-    prerequisites_hash      = prerequisites_list(test_version)
-
-    prerequisites_hash.each do |item, prerequisites|
-      package_name = prerequisites.map { |k, _v| k }.join(',')
-      unless item == 'SQL' && new_resource.install_sql == false
-        prerequisites_required.push(package_name)
-        installed_prerequisites.push(package_name) if is_package_installed?(package_name)
+  is_sql_installed = false
+  prerequisites_required = []
+  installed_prerequisites = []
+  # Determine if all of the Veeam pre-requisites are installed and if so, then skip the processing.
+  prerequisites_hash      = prerequisites_list(new_resource.version)
+  prerequisites_hash.each do |item, prerequisites|
+    package_name = prerequisites.map { |k, _v| k }.join(',')
+    prerequisites_required.push(package_name)
+    if item == 'SQL'
+      base_version = new_resource.version.match(/(^\d+.\d+)/).captures[0]
+      versions = [new_resource.version, base_version]
+      # If the system has been upgraded from 9.5 then we need to load that as part of the check
+      versions.push('9.5') if Gem::Version.new(base_version) > Gem::Version.new('9.5')
+      versions.each do |version|
+        _sql_version, sql_configurations = sqlexpress_list(version).first
+        installed_version_reg_key = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\#{sql_configurations['reg_key']}\\MSSQLServer\\CurrentVersion"
+        next unless registry_key_exists?(installed_version_reg_key, :machine)
+        installed_prerequisites.push(package_name)
+        is_sql_installed = true
+        break
       end
+    elsif is_package_installed?(package_name)
+      installed_prerequisites.push(package_name)
     end
-
-    # Compare the required Prerequisites with those installed.  If all are installed, then
-    # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
-    return false if (prerequisites_required - installed_prerequisites).empty? && find_current_dotnet >= 379893
   end
+
+  # Compare the required Prerequisites with those installed.  If all are installed, then
+  # we should report no change back.  By returning 'false', Chef will report that the resource is up-to-date.
+  dotnet_version, _dotnet_installer = dotnet_list(new_resource.version).first
+  return false if (prerequisites_required - installed_prerequisites).empty? && find_current_dotnet >= dotnet_version.to_i
 
   package_save_dir = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'package'))
 
@@ -88,7 +99,7 @@ action :install do
 
   install_dotnet(installer_file_name)
   install_sql_tools(installer_file_name)
-  install_sql_express(installer_file_name) if new_resource.install_sql
+  install_sql_express(installer_file_name) if new_resource.install_sql && !is_sql_installed
 
   # Dismount the ISO if it is mounted
   unmount_installer(installer_file_name)
@@ -98,24 +109,21 @@ action :install do
 end
 
 action_class do
-  def whyrun_supported?
-    true
-  end
-
   def install_dotnet(downloaded_file_name)
-    return 'Already installed' if find_current_dotnet >= 379893
+    dotnet_version, dotnet_installer = dotnet_list(new_resource.version).first
+    return 'Already installed' if find_current_dotnet >= dotnet_version.to_i
     reboot 'DotNet Install Complete' do
       delay_mins 1
       reason 'Reboot required after an installation of .NET Framework'
       action :nothing
     end
 
-    ruby_block 'Install the .NET 4.5.2' do
+    ruby_block 'Install the .NET' do
       block do
         install_media_path = get_media_installer_location(downloaded_file_name)
-        windows_package 'Microsoft .NET Framework 4.5.2' do
+        windows_package 'Microsoft .NET Framework' do
           provider       Chef::Provider::Package::Windows
-          source         "#{install_media_path}\\Redistr\\NDP452-KB2901907-x86-x64-AllOS-ENU.exe"
+          source         "#{install_media_path}\\Redistr\\#{dotnet_installer}"
           installer_type :custom
           options        '/norestart /passive'
           action         :install
@@ -155,14 +163,13 @@ action_class do
   end
 
   def install_sql_express(downloaded_file_name)
-    installed_version_reg_key = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SQL Server\\MSSQL11.SQLEXPRESS\MSSQLServer\CurrentVersion'
-    return 'Already Installed' if registry_key_exists?(installed_version_reg_key, :machine)
+    _sql_version, sql_configurations = sqlexpress_list(new_resource.version).first
     config_file_path = win_clean_path(::File.join(::Chef::Config[:file_cache_path], 'ConfigurationFile.ini'))
     output_file      = win_clean_path(::File.join(Chef::Config[:file_cache_path], 'sql_install.log'))
     sql_build_script = win_clean_path(::File.join(Chef::Config[:file_cache_path], 'sql_build_script.ps1'))
 
-    sql_sys_admin_list = "NT AUTHORITY\\SYSTEM\" \"#{node['hostname']}\\#{ENV['USERNAME']}"
-    sql_sys_admin_list = "NT AUTHORITY\\SYSTEM\" \"#{ENV['USERDOMAIN']}\\#{ENV['USERNAME']}" if node['kernel']['cs_info']['part_of_domain']
+    sql_sys_admin_list = "NT AUTHORITY\\SYSTEM\" \"BUILTIN\\Administrators\" \"#{node['hostname']}\\#{ENV['USERNAME']}"
+    sql_sys_admin_list = "NT AUTHORITY\\SYSTEM\" \"BUILTIN\\Administrators\" \"#{ENV['USERDOMAIN']}\\#{ENV['USERNAME']}" if node['kernel']['cs_info']['part_of_domain']
     sql_sys_admin_list = node['veeam']['server']['vbr_service_user'] if node['veeam']['server']['vbr_service_user']
 
     template config_file_path do
@@ -183,7 +190,7 @@ action_class do
           sensitive true
           source ::File.join('sql_server', 'sql_build_script.ps1.erb')
           variables(
-            sql_install_media: "#{install_media_path}\\Redistr\\x64",
+            sql_install_media: "#{install_media_path}\\Redistr\\x64\\#{sql_configurations['installer']}",
             sql_build_command: "/q /ConfigurationFile=#{config_file_path}",
             outputFilePath: output_file
           )

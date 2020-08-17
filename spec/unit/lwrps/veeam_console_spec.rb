@@ -1,8 +1,11 @@
 #
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Spec:: console
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# maintainer:: Exosphere Data, LLC
+# maintainer_email:: chef@exospheredata.com
+#
+# Copyright:: 2020, Exosphere Data, LLC, All Rights Reserved.
 
 require 'spec_helper'
 
@@ -23,7 +26,7 @@ describe 'veeam::console' do
         context "On #{platform} #{version}" do
           before do
             Fauxhai.mock(platform: platform, version: version)
-            node.normal['veeam']['console']['accept_eula'] = true
+            node.override['veeam']['console']['accept_eula'] = true
             # Need to set a valid .NET Framework version
             allow_any_instance_of(Chef::DSL::RegistryHelper)
               .to receive(:registry_get_values)
@@ -36,7 +39,7 @@ describe 'veeam::console' do
           let(:node) { runner.node }
           let(:chef_run) { runner.converge(described_recipe) }
           let(:package_save_dir) { win_clean_path(::File.join(Chef::Config[:file_cache_path], 'package')) }
-          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup&Replication_9.5.0.711.iso')) }
+          let(:downloaded_file_name) { win_clean_path(::File.join(package_save_dir, 'VeeamBackup&Replication_10.0.0.4461.iso')) }
 
           it 'converges successfully' do
             expect(chef_run).to install_veeam_prerequisites('Install Veeam Prerequisites')
@@ -44,7 +47,7 @@ describe 'veeam::console' do
             expect { chef_run }.not_to raise_error
           end
           it 'Step into LWRP - veeam_console' do
-            node.normal['veeam']['console']['accept_eula'] = true
+            node.override['veeam']['console']['accept_eula'] = true
             expect { chef_run }.not_to raise_error
             expect(chef_run).to create_directory(package_save_dir)
             expect(chef_run).to create_remote_file(downloaded_file_name)
@@ -57,11 +60,11 @@ describe 'veeam::console' do
             expect(chef_run).to run_powershell_script('Dismount Veeam media')
           end
           it 'should not remove the media if keep_media is True' do
-            node.normal['veeam']['console']['keep_media'] = true
+            node.override['veeam']['console']['keep_media'] = true
             expect(chef_run).not_to delete_file(downloaded_file_name)
           end
           it 'returns NO error when install_dir supplied' do
-            node.normal['veeam']['console']['install_dir'] = 'C:\\Veeam\\Backupconsole'
+            node.override['veeam']['console']['install_dir'] = 'C:\\Veeam\\Backupconsole'
             expect { chef_run }.not_to raise_error
           end
           it 'raises an error about .NET Framework' do
@@ -71,7 +74,7 @@ describe 'veeam::console' do
             expect { chef_run }.to raise_error(RuntimeError, /Microsoft .NET Framework 4.5.2 or higher be installed/)
           end
           it 'raises an error when EULA not accepted' do
-            node.normal['veeam']['console']['accept_eula'] = false
+            node.override['veeam']['console']['accept_eula'] = false
             # Need to set a valid .NET Framework version
             expect { chef_run }.to raise_error(ArgumentError, /The Veeam Backup and Recovery EULA must be accepted/)
           end

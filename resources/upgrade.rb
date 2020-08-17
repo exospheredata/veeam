@@ -1,4 +1,4 @@
-# Cookbook Name:: veeam
+# Cookbook:: veeam
 # Resource:: upgrade
 #
 # Author:: Jeremy Goodrum
@@ -7,7 +7,7 @@
 # Version:: 1.0.0
 # Date:: 2018-04-29
 #
-# Copyright (c) 2016 Exosphere Data LLC, All Rights Reserved.
+# Copyright:: (c) 2020 Exosphere Data LLC, All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ property :package_url, String
 property :package_checksum, String
 
 property :version, String
-property :keep_media, [TrueClass, FalseClass], default: false
-property :auto_reboot, [TrueClass, FalseClass], default: true
+property :keep_media, [true, false], default: false
+property :auto_reboot, [true, false], default: true
 
 property :package_name, String # Future Property
 property :share_path, String   # Future Property
@@ -58,7 +58,12 @@ action :install do
 
   # => So without a build we will have a hard time determining how to upgrade.  Since we have the update url
   # => we can extract the build from this.
-  new_resource.build = /(\d+.\d+.\d+.\d+)/.match(new_resource.package_url.split('/')[-1]).captures[0] unless new_resource.build
+  # => 2020-08-05: If we pass a ZIP then alway use that version for the upgrade
+
+  if /(.zip)/.match(new_resource.package_url.split('/')[-1]) || !new_resource.build
+    new_resource.build = /(\d+.\d+.\d+.\d+)/.match(new_resource.package_url.split('/')[-1]).captures[0]
+    Chef::Log.info("Looking for: #{new_resource.build}")
+  end
 
   # => We need to determine the actual build of installed Veeam Software.  Since there are three main packages
   # => we will need to iterate through their possible locations.
@@ -128,10 +133,6 @@ action :install do
 end
 
 action_class do
-  def whyrun_supported?
-    true
-  end
-
   def perform_server_upgrade(install_media_path)
     Chef::Log.debug 'Upgrading Veeam Backup server service... begin'
     # VBR Service Configuration
