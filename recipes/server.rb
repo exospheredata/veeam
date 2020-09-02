@@ -30,6 +30,7 @@ veeam_server 'Install Veeam Backup Server' do
   accept_eula node['veeam']['server']['accept_eula']
   evaluation node['veeam']['server']['evaluation']
   install_dir node['veeam']['server']['install_dir']
+  vbr_sqlserver_server node['veeam']['server']['vbr_sqlserver_server']
   vbr_service_user node['veeam']['server']['vbr_service_user']
   vbr_service_password node['veeam']['server']['vbr_service_password']
   vbr_service_port node['veeam']['server']['vbr_service_port']
