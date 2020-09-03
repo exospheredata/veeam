@@ -3,7 +3,7 @@ maintainer 'Exosphere Data, LLC'
 maintainer_email 'chef@exospheredata.com'
 license 'Apache-2.0'
 description 'Installs/Configures Veeam Backup and Recovery'
-version '4.0.3'
+version '4.1.0'
 chef_version '>= 13.0'
 
 supports 'windows'

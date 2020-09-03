@@ -1,5 +1,10 @@
 # Change log information for Veeam Cookbook
 
+## Version 4.1.0
+2020-09-02
+
+- UPDATE: SQL instance names are now flexible trough an attribute.
+
 ## Version 4.0.3
 2020-08-14
 

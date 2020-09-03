@@ -178,6 +178,7 @@ action_class do
       source ::File.join('sql_server', 'ConfigurationFile.ini.erb')
       provider Chef::Provider::File::Template
       variables(
+        sqlInstanceName: node['veeam']['server']['vbr_sqlserver_server'].split('\\')[-1],
         sqlSysAdminList: sql_sys_admin_list
       )
     end
